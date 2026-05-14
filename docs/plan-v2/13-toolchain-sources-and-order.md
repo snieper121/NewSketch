@@ -10,10 +10,10 @@
 
 | Tool | Source | URL pattern | Pre-dex? |
 |------|--------|-------------|----------|
-| kotlinc | Maven Central | `repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.0/kotlin-compiler-embeddable-2.1.0.jar` | Да → .dex |
-| compose-compiler-plugin | Maven Central | `repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin-embeddable/2.1.0/kotlin-compose-compiler-plugin-embeddable-2.1.0.jar` | Да → .dex |
-| ecj | Maven Central | `repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.39.0/ecj-3.39.0.jar` | Да → .dex |
-| kotlin-stdlib | Maven Central | `repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.1.0/kotlin-stdlib-2.1.0.jar` | Нет (classpath) |
+| kotlinc | Maven Central | `repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.2.0/kotlin-compiler-embeddable-2.2.0.jar` | Да → .dex |
+| compose-compiler-plugin | Maven Central | `repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin-embeddable/2.2.0/kotlin-compose-compiler-plugin-embeddable-2.2.0.jar` | Да → .dex |
+| ecj | Maven Central | `repo1.maven.org/maven2/org/eclipse/jdt/ecj/3.40.0/ecj-3.40.0.jar` | Да → .dex |
+| kotlin-stdlib | Maven Central | `repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.2.0/kotlin-stdlib-2.2.0.jar` | Нет (classpath) |
 | aapt2 | Google Maven | `dl.google.com/dl/android/maven2/com/android/tools/build/aapt2/8.10.0-12006003/aapt2-8.10.0-12006003-linux.jar` (внутри — native binary) | Extract binary |
 | d8 (R8) | Google Maven | `dl.google.com/dl/android/maven2/com/android/tools/r8/8.10.22/r8-8.10.22.jar` | Да → .dex |
 | android.jar | Android SDK | `dl.google.com/android/repository/platform-35_r02.zip` (внутри `android.jar`) | Нет (classpath) |
@@ -27,10 +27,10 @@ object ToolchainChecksums {
     // TODO: вычислить реальные SHA-256 при первом скачивании
     // Формат: filename → sha256
     val CHECKSUMS = mapOf(
-        "kotlinc-embeddable-2.1.0.jar" to "TODO_COMPUTE_ON_FIRST_DOWNLOAD",
-        "kotlin-compose-compiler-plugin-embeddable-2.1.0.jar" to "TODO_COMPUTE",
-        "ecj-3.39.0.jar" to "TODO_COMPUTE",
-        "kotlin-stdlib-2.1.0.jar" to "TODO_COMPUTE",
+        "kotlinc-embeddable-2.2.0.jar" to "TODO_COMPUTE_ON_FIRST_DOWNLOAD",
+        "kotlin-compose-compiler-plugin-embeddable-2.2.0.jar" to "TODO_COMPUTE",
+        "ecj-3.40.0.jar" to "TODO_COMPUTE",
+        "kotlin-stdlib-2.2.0.jar" to "TODO_COMPUTE",
         "r8-8.10.22.jar" to "TODO_COMPUTE",
         "aapt2" to "TODO_COMPUTE",
         "android-35.jar" to "TODO_COMPUTE",
@@ -49,13 +49,13 @@ curl -sL <URL> | sha256sum
 
 ```bash
 # 1. Скачать JAR
-wget https://repo1.maven.org/.../kotlin-compiler-embeddable-2.1.0.jar
+wget https://repo1.maven.org/.../kotlin-compiler-embeddable-2.2.0.jar
 
 # 2. Конвертировать в DEX через d8
-java -jar d8.jar --release --output kotlinc-2.1.0.dex kotlin-compiler-embeddable-2.1.0.jar
+java -jar d8.jar --release --output kotlinc-2.2.0.dex kotlin-compiler-embeddable-2.2.0.jar
 
 # 3. Вычислить SHA-256
-sha256sum kotlinc-2.1.0.dex > kotlinc-2.1.0.dex.sha256
+sha256sum kotlinc-2.2.0.dex > kotlinc-2.2.0.dex.sha256
 
 # 4. Загрузить на CDN (или использовать GitHub Releases)
 ```
@@ -193,9 +193,9 @@ sha256sum kotlinc-2.1.0.dex > kotlinc-2.1.0.dex.sha256
 package my.company.ai.build
 
 object ToolchainConfig {
-    const val KOTLIN_VERSION = "2.1.0"
-    const val COMPOSE_COMPILER_VERSION = "2.1.0"
-    const val ECJ_VERSION = "3.39.0"
+    const val KOTLIN_VERSION = "2.2.0"
+    const val COMPOSE_COMPILER_VERSION = "2.2.0"
+    const val ECJ_VERSION = "3.40.0"
     const val BUILD_TOOLS_VERSION = "35.0.0"
     const val PLATFORM_API = 35
     const val R8_VERSION = "8.10.22"

@@ -8,7 +8,7 @@
 
 ### Конфигурация
 
-- **Gradle:** 9.5.1, AGP 8.10.0, Kotlin 2.1.10 ✅
+- **Gradle:** 9.5.1, AGP 8.10.0, Kotlin 2.2.0 ✅
 - **minSdk:** 29 ✅
 - **targetSdk:** 36 ✅
 - **Package:** `my.company.ai`
@@ -62,7 +62,7 @@ my.company.ai/
 | # | Проблема | Серьёзность | Где исправлять |
 |---|----------|-------------|---------------|
 | 1 | Шаблон генерирует XML+AppCompat, не Compose | Критично | `data/template/KotlinProjectTemplate.kt` |
-| 2 | `minSdk = 26`, нужно `29` | Критично | `app/build.gradle.kts` |
+| 2 | `minSdk = 29` ✅ (уже исправлено) | — | — |
 | 3 | Нет JSON-модели (project.json/screen.json) | Критично | `data/model/` — новые классы |
 | 4 | Нет build pipeline (on-device компиляция) | Критично | Новый пакет `build/` |
 | 5 | `Widget` — enum, а не дерево с properties | Высоко | `data/model/Widget.kt` → переписать |
@@ -86,7 +86,7 @@ my.company.ai/
 
 ### Фаза 0: Исправить фундамент
 
-1. `app/build.gradle.kts` → `minSdk = 29`
+1. ✅ `app/build.gradle.kts` → `minSdk = 29` (уже исправлено)
 2. `AndroidManifest.xml` → добавить permissions, service, queries
 3. `data/model/` → новые data classes: `ScreenModel`, `WidgetNode`, `ProjectModel` (JSON-serializable)
 4. `data/template/KotlinProjectTemplate.kt` → переписать под Compose-шаблон

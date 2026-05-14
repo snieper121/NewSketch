@@ -31,7 +31,7 @@ aapt2 генерирует `R.java` — это **Java-файл**, не Kotlin. k
 3. **Standalone** — не требует JDK
 4. **Apache 2.0 compatible** (EPL, но для ecj можно использовать)
 
-Maven coordinates: `org.eclipse.jdt:ecj:3.40.0` (или последняя стабильная).
+Maven coordinates: `org.eclipse.jdt:ecj:3.40.0`.
 
 **Альтернатива:** можно скомпилировать R.java через **d8 как .dex напрямую** (d8 принимает .java через wrapper), но это хуже для incremental builds.
 

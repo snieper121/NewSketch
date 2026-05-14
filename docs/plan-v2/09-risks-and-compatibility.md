@@ -23,6 +23,13 @@
 | R17 | Local LLM требует слишком много памяти | Высокая | Низкий | MVP только cloud, local в v1.0 с явным hardware req |
 | R18 | CDN для toolchain недоступен | Низкая | Критический | Multi-CDN (AWS + Google Cloud), fallback на Maven Central |
 | R19 | Государственный бан Play Store в некоторых странах | Высокая | Средний | Alternative distribution: APK на сайте, F-Droid, Huawei |
+| R20 | GitHub token не персистится между сессиями | Средняя | Низкий | Документировать в AGENTS.md процесс авторизации |
+| R21 | Kotlin 2.2.0 + Compose Compiler Plugin совместимость не протестирована | Средняя | Высокий | Первый CI-прогон после каждого обновления Kotlin |
+| R22 | GitHub Actions runner на x86_64, но мы на aarch64 — нет локальной валидации | Средняя | Средний | Всегда дожидаться CI, никогда не мержить без прохождения |
+| R23 | Play Store может отклонить из-за dynamic code loading (DexClassLoader) | Средняя | Критический | Подготовить appeal letter, альтернатива: bundled toolchain |
+| R24 | 130MB toolchain download на мобильном соединении без resume | Высокая | Средний | Реализовать HTTP Range requests, chunked download |
+| R25 | AGP 8.10.0 + Gradle 9.5.1 — нестандартная комбинация | Низкая | Средний | Мониторить release notes, держать fallback конфигурацию |
+| R26 | EncryptedSharedPreferences в security-crypto 1.1.0-alpha06 — alpha quality | Средняя | Средний | Обёртка с fallback на обычный DataStore при crash |
 
 ## Forward-Compatibility Policy
 

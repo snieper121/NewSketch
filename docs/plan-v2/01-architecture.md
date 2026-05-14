@@ -7,7 +7,7 @@
 | UI | Jetpack Compose + Material3 | BOM 2024.12.01 |
 | Presentation | ViewModel + StateFlow (MVI) | lifecycle 2.8.7 |
 | DI | AppContainer (MVP) → Koin (M3+) | koin-android 4.0+ |
-| Navigation | Navigation Compose | 2.8.5 |
+| Navigation | Navigation Compose | 2.9.0 |
 | Storage | Room (метаданные) + FileSystem (исходники) | room 2.6.1 |
 | Network | Ktor Client | 3.0.2 |
 | Serialization | Kotlinx Serialization | 1.7.3 |
