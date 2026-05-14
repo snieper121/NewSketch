@@ -3,7 +3,8 @@
 
 .gradle/
 .kotlin/
-build/
+/build/
+/app/build/
 bin/
 gen/
 out/
