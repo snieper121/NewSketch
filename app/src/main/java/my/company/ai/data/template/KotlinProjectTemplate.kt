@@ -63,8 +63,8 @@ include(":app")
 
 private const val ROOT_BUILD_GRADLE = """plugins {
     id("com.android.application") version "8.10.0" apply false
-    id("org.jetbrains.kotlin.android") version "2.2.0" apply false
-    id("org.jetbrains.kotlin.plugin.compose") version "2.2.0" apply false
+    id("org.jetbrains.kotlin.android") version "2.1.10" apply false
+    id("org.jetbrains.kotlin.plugin.compose") version "2.1.10" apply false
 }
 """
 
