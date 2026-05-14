@@ -8,7 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import my.company.ai.ui.screens.build.BuildScreen
+import my.company.ai.ui.screens.compiler.BuildScreen
 import my.company.ai.ui.screens.chat.ChatScreen
 import my.company.ai.ui.screens.editor.EditorScreen
 import my.company.ai.ui.screens.projects.ProjectsScreen
