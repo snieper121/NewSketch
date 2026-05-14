@@ -63,8 +63,8 @@ include(":app")
 
 private const val ROOT_BUILD_GRADLE = """plugins {
     id("com.android.application") version "8.10.0" apply false
-    id("org.jetbrains.kotlin.android") version "2.1.0" apply false
-    id("org.jetbrains.kotlin.plugin.compose") version "2.1.0" apply false
+    id("org.jetbrains.kotlin.android") version "2.2.0" apply false
+    id("org.jetbrains.kotlin.plugin.compose") version "2.2.0" apply false
 }
 """
 
@@ -86,8 +86,8 @@ android {
 
     defaultConfig {
         applicationId = "{{packageName}}"
-        minSdk = 26
-        targetSdk = 35
+        minSdk = 29
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
     }
@@ -96,8 +96,15 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
-    buildFeatures { compose = true }
+    kotlin {
+        compilerOptions {
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        }
+    }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 }
 
 dependencies {
