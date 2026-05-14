@@ -95,6 +95,10 @@ jobs:
           name: apk-list
           path: apk-files.txt
 
+      - name: Show assemble log
+        if: always()
+        run: cat assemble-log.txt | tail -100
+
       - name: Upload assemble logs
         uses: actions/upload-artifact@v4
         if: always()
