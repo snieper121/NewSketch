@@ -73,11 +73,18 @@ jobs:
       - name: Assemble Debug APK
         run: ./gradlew assembleDebug --build-cache --no-daemon 2>&1 | tee assemble-log.txt
 
+      - name: Show APK output
+        run: |
+          echo "=== APK files ==="
+          ls -la app/build/outputs/apk/debug/ || echo "Directory not found"
+          echo "=== APK size ==="
+          du -h app/build/outputs/apk/debug/*.apk 2>/dev/null || echo "No APK found"
+
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
 
       - name: Upload assemble logs
         uses: actions/upload-artifact@v4
@@ -86,14 +93,14 @@ jobs:
           name: assemble-logs
           path: assemble-log.txt
 
-      - name: Print APK download URL
+      - name: Print APK info
         run: |
           echo "========================================"
           echo "📱 Debug APK собран!"
           echo ""
-          echo "⬇️  Скачать APK: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "⬇️  Скачать APK (ZIP): https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           echo ""
-          echo "В разделе 'Artifacts' найди app-debug-apk"
+          echo "В разделе 'Artifacts' найди: app-debug"
           echo "========================================"
 
   test:
