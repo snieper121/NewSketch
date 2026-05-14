@@ -208,7 +208,7 @@
 **Что создать:**
 ```kotlin
 object ToolchainConfig {
-    const val KOTLIN_VERSION = "2.2.0"  // Исправлено: было 2.1.0
+    const val KOTLIN_VERSION = "2.1.10"  // CI-проверено, стабильная версия
     const val COMPOSE_COMPILER_VERSION = "2.2.0"
     const val ECJ_VERSION = "3.40.0"    // Единая версия
     const val BUILD_TOOLS_VERSION = "35.0.0"

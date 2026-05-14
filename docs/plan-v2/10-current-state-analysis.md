@@ -1,19 +1,21 @@
 # 10 — Анализ текущего состояния проекта
 
-## Дата: 2026-05-11
+## Дата: 2026-05-14
 
 ## Что есть
 
-Рабочий Android-проект (Gradle, собирается через AndroidPE) с базовой структурой IDE.
+Рабочий Android-проект (Gradle, собирается через GitHub Actions CI) с базовой структурой IDE.
 
 ### Конфигурация
 
-- **Gradle:** 8.11.1 / 9.4.1, AGP 8.10.0, Kotlin 2.1.0
-- **minSdk:** 26 (❌ нужно 29)
+- **Gradle:** 9.5.1, AGP 8.10.0, Kotlin 2.1.10 ✅
+- **minSdk:** 29 ✅
 - **targetSdk:** 36 ✅
 - **Package:** `my.company.ai`
-- **DI:** ручной AppContainer (не Koin)
-- **aapt2:** override из AndroidPE (`/data/data/jkas.androidpe/files/home/.androidpe/aapt2`)
+- **DI:** ручной AppContainer (не Koin) — план: Koin в M3+
+- **aapt2:** из Maven репозитория (не локальный override) ✅
+- **CI:** GitHub Actions (build/test/lint/assemble) ✅
+- **APK artifact:** 16.9 MB debug APK ✅
 
 ### Структура кода
 
