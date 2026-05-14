@@ -33,7 +33,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew build --build-cache --no-daemon
+        run: ./gradlew build --build-cache --no-daemon 2>&1 | tee build-log.txt
 
       - name: Upload build reports
         uses: actions/upload-artifact@v4
@@ -41,6 +41,13 @@ jobs:
         with:
           name: build-reports
           path: app/build/reports/
+
+      - name: Upload build logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-logs
+          path: build-log.txt
 
   assemble:
     runs-on: ubuntu-latest
@@ -64,13 +71,20 @@ jobs:
         run: chmod +x gradlew
 
       - name: Assemble Debug APK
-        run: ./gradlew assembleDebug --build-cache --no-daemon
+        run: ./gradlew assembleDebug --build-cache --no-daemon 2>&1 | tee assemble-log.txt
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload assemble logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: assemble-logs
+          path: assemble-log.txt
 
       - name: Print APK download URL
         run: |
@@ -104,7 +118,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run unit tests
-        run: ./gradlew test --build-cache --no-daemon
+        run: ./gradlew test --build-cache --no-daemon 2>&1 | tee test-log.txt
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -112,6 +126,13 @@ jobs:
         with:
           name: test-results
           path: app/build/test-results/
+
+      - name: Upload test logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-logs
+          path: test-log.txt
 
   lint:
     runs-on: ubuntu-latest
@@ -135,7 +156,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run lint
-        run: ./gradlew lint --build-cache --no-daemon
+        run: ./gradlew lint --build-cache --no-daemon 2>&1 | tee lint-log.txt
 
       - name: Upload lint results
         uses: actions/upload-artifact@v4
@@ -143,3 +164,10 @@ jobs:
         with:
           name: lint-results
           path: app/build/reports/lint-results*.html
+
+      - name: Upload lint logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lint-logs
+          path: lint-log.txt
