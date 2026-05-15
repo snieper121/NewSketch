@@ -115,9 +115,13 @@ class BuildViewModel(
         }
     }
 
+    /**
+     * TODO: реализовать установку APK через PackageInstaller
+     * после интеграции реального toolchain (aapt2 + d8 + zipalign + apksigner).
+     */
     fun installApk() {
         _uiState.update {
-            it.copy(logs = it.logs + "Запрос на установку APK...")
+            it.copy(logs = it.logs + "Установка APK (не реализовано в M0 stub)")
         }
     }
 
