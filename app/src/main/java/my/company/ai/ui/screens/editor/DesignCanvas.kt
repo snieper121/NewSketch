@@ -1,5 +1,7 @@
 package my.company.ai.ui.screens.editor
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +25,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -33,15 +36,16 @@ import androidx.compose.ui.unit.dp
 import my.company.ai.data.model.WidgetType
 
 /**
- * Визуальный канвас: рендерит превью виджетов, которые **уже записаны**
- * в `MainActivity.kt`.
+ * Визуальный канвас: рендерит превью виджетов с поддержкой выбора.
  *
- * Каждая карточка показывает, какой Compose-код сгенерирован, и позволяет
- * удалить этот виджет (удаление перегенерирует файл без него).
+ * Tap на виджет → выделение + открытие PropertyEditorSheet.
+ * Кнопка удаления → удаление виджета из списка.
  */
 @Composable
 fun DesignCanvas(
-    widgets: List<WidgetType>,
+    widgets: List<WidgetItem>,
+    selectedIndex: Int?,
+    onSelect: (Int) -> Unit,
     onRemoveAt: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -54,8 +58,13 @@ fun DesignCanvas(
         contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        itemsIndexed(widgets, key = { idx, _ -> idx }) { idx, type ->
-            WidgetPreview(type = type, onRemove = { onRemoveAt(idx) })
+        itemsIndexed(widgets, key = { idx, _ -> idx }) { idx, widget ->
+            WidgetPreview(
+                widget = widget,
+                isSelected = idx == selectedIndex,
+                onClick = { onSelect(idx) },
+                onRemove = { onRemoveAt(idx) },
+            )
         }
     }
 }
@@ -85,12 +94,29 @@ private fun EmptyCanvas(modifier: Modifier) {
 }
 
 @Composable
-private fun WidgetPreview(type: WidgetType, onRemove: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
+private fun WidgetPreview(
+    widget: WidgetItem,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    onRemove: () -> Unit,
+) {
+    val borderStroke = if (isSelected) {
+        BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+    } else {
+        null
+    }
+
+    OutlinedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        border = borderStroke,
+        colors = CardDefaults.outlinedCardColors(
+            containerColor = if (isSelected)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            else
+                MaterialTheme.colorScheme.surfaceVariant,
         ),
     ) {
         Column(Modifier.padding(12.dp)) {
@@ -99,31 +125,43 @@ private fun WidgetPreview(type: WidgetType, onRemove: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    type.displayName,
+                    widget.type.displayName,
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = if (isSelected)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
+                // Показываем ключевые свойства
+                if (widget.properties.containsKey("text")) {
+                    Text(
+                        "\"${widget.properties["text"]}\"",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 IconButton(onClick = onRemove) {
                     Icon(Icons.Default.Close, contentDescription = "Удалить")
                 }
             }
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))
-            Box(Modifier.padding(4.dp)) { renderPreview(type) }
+            Box(Modifier.padding(4.dp)) { renderPreview(widget) }
         }
     }
 }
 
 @Composable
-private fun renderPreview(type: WidgetType) {
-    when (type) {
-        WidgetType.Text -> Text("Текст")
-        WidgetType.Button -> Button(onClick = {}) { Text("Кнопка") }
+private fun renderPreview(widget: WidgetItem) {
+    val text = widget.properties["text"] ?: widget.type.defaultText
+    when (widget.type) {
+        WidgetType.Text -> Text(text)
+        WidgetType.Button -> Button(onClick = {}) { Text(text) }
         WidgetType.TextField -> OutlinedTextField(
-            value = "",
+            value = widget.properties["value"] ?: "",
             onValueChange = {},
-            placeholder = { Text("Поле ввода") },
+            placeholder = { Text(widget.properties["label"] ?: "Поле ввода") },
             modifier = Modifier.fillMaxWidth(),
         )
         WidgetType.Image -> Box(
@@ -135,7 +173,7 @@ private fun renderPreview(type: WidgetType) {
         WidgetType.Icon -> Icon(Icons.Default.Widgets, contentDescription = null)
         WidgetType.Checkbox -> Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = false, onCheckedChange = {})
-            Text("Чекбокс")
+            Text(text)
         }
         WidgetType.Switch -> Switch(checked = false, onCheckedChange = {})
         WidgetType.Divider -> HorizontalDivider()

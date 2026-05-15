@@ -15,6 +15,16 @@ import my.company.ai.data.repository.ProjectRepository
 
 enum class DrawerMode { Widgets, Files }
 
+/**
+ * Элемент виджета на canvas.
+ * Гибридный подход: properties для свойств виджета, modifier для модификаторов.
+ */
+data class WidgetItem(
+    val type: WidgetType,
+    val properties: MutableMap<String, String> = mutableMapOf(),
+    val modifier: MutableMap<String, String> = mutableMapOf(),
+)
+
 data class EditorUiState(
     val project: Project? = null,
     val tree: ProjectFile? = null,
@@ -25,10 +35,13 @@ data class EditorUiState(
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
     val drawerMode: DrawerMode = DrawerMode.Widgets,
-    val widgetTypes: List<WidgetType> = emptyList(),
+    val widgets: List<WidgetItem> = emptyList(),
+    val selectedWidgetIndex: Int? = null,
+    val showPropertyEditor: Boolean = false,
     val pendingOpenFile: String? = null,
 ) {
     val hasUnsavedChanges: Boolean get() = openedFile != null && editorContent != savedContent
+    val selectedWidget: WidgetItem? get() = selectedWidgetIndex?.let { widgets.getOrNull(it) }
 }
 
 class EditorViewModel(
@@ -127,18 +140,86 @@ class EditorViewModel(
         _uiState.update { it.copy(openedFile = null, editorContent = "", savedContent = "", pendingOpenFile = null) }
     }
 
+    // === Widget Management ===
+
     /**
-     * Добавляет виджет в список (пока только UI-state, без записи в файл).
-     * Полная интеграция с JSON-моделью — в M1.
+     * Добавляет виджет в список с дефолтными свойствами.
      */
     fun addWidget(type: WidgetType) {
-        _uiState.update { it.copy(widgetTypes = it.widgetTypes + type) }
+        val properties = mutableMapOf<String, String>()
+        // Дефолтные свойства в зависимости от типа
+        when (type) {
+            WidgetType.Text -> properties["text"] = "Текст"
+            WidgetType.Button -> properties["text"] = "Кнопка"
+            WidgetType.TextField -> {
+                properties["label"] = "Поле ввода"
+                properties["value"] = ""
+            }
+            WidgetType.Checkbox -> properties["text"] = "Чекбокс"
+            else -> {} // Остальные без дефолтных свойств
+        }
+        val widget = WidgetItem(type = type, properties = properties)
+        _uiState.update { it.copy(widgets = it.widgets + widget) }
     }
 
     fun removeWidgetAt(index: Int) {
         _uiState.update { st ->
-            val next = st.widgetTypes.toMutableList().apply { if (index in indices) removeAt(index) }
-            st.copy(widgetTypes = next)
+            val next = st.widgets.toMutableList().apply { if (index in indices) removeAt(index) }
+            st.copy(
+                widgets = next,
+                selectedWidgetIndex = if (st.selectedWidgetIndex == index) null else st.selectedWidgetIndex,
+                showPropertyEditor = if (st.selectedWidgetIndex == index) false else st.showPropertyEditor,
+            )
+        }
+    }
+
+    /**
+     * Выбирает виджет на canvas и открывает PropertyEditorSheet.
+     */
+    fun selectWidget(index: Int) {
+        _uiState.update {
+            it.copy(
+                selectedWidgetIndex = index,
+                showPropertyEditor = true,
+            )
+        }
+    }
+
+    /**
+     * Снимает выделение и закрывает PropertyEditorSheet.
+     */
+    fun deselectWidget() {
+        _uiState.update {
+            it.copy(
+                selectedWidgetIndex = null,
+                showPropertyEditor = false,
+            )
+        }
+    }
+
+    /**
+     * Обновляет свойство выбранного виджета.
+     */
+    fun updateWidgetProperty(key: String, value: String) {
+        val index = _uiState.value.selectedWidgetIndex ?: return
+        _uiState.update { st ->
+            val widgets = st.widgets.toMutableList()
+            val widget = widgets.getOrNull(index) ?: return@update st
+            widget.properties[key] = value
+            st.copy(widgets = widgets)
+        }
+    }
+
+    /**
+     * Обновляет модификатор выбранного виджета.
+     */
+    fun updateWidgetModifier(key: String, value: String) {
+        val index = _uiState.value.selectedWidgetIndex ?: return
+        _uiState.update { st ->
+            val widgets = st.widgets.toMutableList()
+            val widget = widgets.getOrNull(index) ?: return@update st
+            widget.modifier[key] = value
+            st.copy(widgets = widgets)
         }
     }
 

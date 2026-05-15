@@ -254,11 +254,13 @@ fun EditorScreen(
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
-                EditorSymbolBar(
-                    onInsertSymbol = { symbol ->
-                        viewModel.insertTextAtCursor(symbol)
-                    },
-                )
+                if (state.openedFile != null) {
+                    EditorSymbolBar(
+                        onInsertSymbol = { symbol ->
+                            viewModel.insertTextAtCursor(symbol)
+                        },
+                    )
+                }
             },
         ) { padding ->
             Box(
@@ -278,13 +280,28 @@ fun EditorScreen(
                         modifier = Modifier.fillMaxSize(),
                     )
                     else -> DesignCanvas(
-                        widgets = state.widgetTypes,
+                        widgets = state.widgets,
+                        selectedIndex = state.selectedWidgetIndex,
+                        onSelect = viewModel::selectWidget,
                         onRemoveAt = viewModel::removeWidgetAt,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
             }
         }
+    }
+
+    // PropertyEditorSheet — показывается при выборе виджета.
+    if (state.showPropertyEditor && state.selectedWidget != null) {
+        val widget = state.selectedWidget!!
+        PropertyEditorSheet(
+            widgetType = widget.type.displayName,
+            properties = widget.properties,
+            onPropertyChange = { key, value ->
+                viewModel.updateWidgetProperty(key, value)
+            },
+            onDismiss = viewModel::deselectWidget,
+        )
     }
 
     // Диалог подтверждения потери несохранённых изменений.
