@@ -444,6 +444,8 @@ private fun DrawerNavigationPanel(
             selected = false,
             onClick = { scope.launch { drawerState.close() }; onOpenExport() },
         )
+        NavigationDrawerItem(
+            icon = { Icon(Icons.Outlined.AutoAwesome, null) },
             label = { Text("AI-чат") },
             selected = false,
             onClick = { scope.launch { drawerState.close() }; onOpenChat() },
@@ -456,9 +458,6 @@ private fun DrawerNavigationPanel(
         )
     }
 }
-
-// ============================================================
-// Код-редактор
 // ============================================================
 
 @Composable
