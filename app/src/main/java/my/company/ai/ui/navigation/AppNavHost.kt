@@ -11,6 +11,8 @@ import androidx.navigation.navArgument
 import my.company.ai.ui.screens.compiler.BuildScreen
 import my.company.ai.ui.screens.chat.ChatScreen
 import my.company.ai.ui.screens.editor.EditorScreen
+import my.company.ai.ui.screens.export.ExportScreen
+import my.company.ai.ui.screens.preview.PreviewScreen
 import my.company.ai.ui.screens.projects.ProjectsScreen
 import my.company.ai.ui.screens.projectsettings.ProjectSettingsScreen
 import my.company.ai.ui.screens.resources.ResourceManagerScreen
@@ -28,6 +30,8 @@ object Routes {
     const val SCREEN_MANAGER = "screen_manager/{projectId}"
     const val RESOURCES = "resources/{projectId}"
     const val STATE_LOGIC = "state_logic/{projectId}"
+    const val PREVIEW = "preview/{projectId}"
+    const val EXPORT = "export/{projectId}"
 
     fun editor(projectId: String) = "editor/$projectId"
     fun build(projectId: String) = "build/$projectId"
@@ -36,6 +40,8 @@ object Routes {
     fun screenManager(projectId: String) = "screen_manager/$projectId"
     fun resources(projectId: String) = "resources/$projectId"
     fun stateLogic(projectId: String) = "state_logic/$projectId"
+    fun preview(projectId: String) = "preview/$projectId"
+    fun export(projectId: String) = "export/$projectId"
 }
 
 @Composable
@@ -64,6 +70,8 @@ fun AppNavHost(
                 onOpenResources = { navController.navigate(Routes.resources(id)) },
                 onOpenStateLogic = { navController.navigate(Routes.stateLogic(id)) },
                 onOpenProjectSettings = { navController.navigate(Routes.projectSettings(id)) },
+                onOpenPreview = { navController.navigate(Routes.preview(id)) },
+                onOpenExport = { navController.navigate(Routes.export(id)) },
             )
         }
 
@@ -97,6 +105,15 @@ fun AppNavHost(
             StateLogicScreen(projectId = id, onBack = { navController.popBackStack() })
         }
 
+        composable(Routes.PREVIEW, arguments = listOf(navArgument("projectId") { type = NavType.StringType })) { entry ->
+            val id = entry.arguments!!.getString("projectId")!!
+            PreviewScreen(projectId = id, onBack = { navController.popBackStack() })
+        }
+
+        composable(Routes.EXPORT, arguments = listOf(navArgument("projectId") { type = NavType.StringType })) { entry ->
+            val id = entry.arguments!!.getString("projectId")!!
+            ExportScreen(projectId = id, onBack = { navController.popBackStack() }, onBuild = { navController.navigate(Routes.build(id)) })
+        }
         composable(Routes.SETTINGS) {
             SettingsScreen(onBack = { navController.popBackStack() })
         }

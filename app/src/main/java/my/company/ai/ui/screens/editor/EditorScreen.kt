@@ -23,6 +23,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material.icons.outlined.AccountTree
 import androidx.compose.material.icons.outlined.AutoAwesome
@@ -74,6 +76,8 @@ enum class DrawerPanel { Files, Widgets, Navigation }
 @Composable
 fun EditorScreen(
     projectId: String,
+    onOpenPreview: () -> Unit = {},
+    onOpenExport: () -> Unit = {},
     onBack: () -> Unit,
     onOpenChat: () -> Unit,
     onOpenBuild: () -> Unit,
@@ -81,6 +85,8 @@ fun EditorScreen(
     onOpenResources: () -> Unit,
     onOpenStateLogic: () -> Unit,
     onOpenProjectSettings: () -> Unit,
+    onOpenPreview: () -> Unit = {},
+    onOpenExport: () -> Unit = {},
     viewModel: EditorViewModel = viewModel(factory = ViewModelFactory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -145,6 +151,8 @@ fun EditorScreen(
                         onOpenBuild = onOpenBuild,
                         onOpenProjectSettings = onOpenProjectSettings,
                         onOpenChat = onOpenChat,
+                        onOpenPreview = onOpenPreview,
+                        onOpenExport = onOpenExport,
                         onBack = onBack,
                     )
                 }
@@ -334,6 +342,8 @@ private fun DrawerNavigationPanel(
     onOpenBuild: () -> Unit,
     onOpenProjectSettings: () -> Unit,
     onOpenChat: () -> Unit,
+    onOpenPreview: () -> Unit = {},
+    onOpenExport: () -> Unit = {},
     onBack: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -422,6 +432,18 @@ private fun DrawerNavigationPanel(
         )
         NavigationDrawerItem(
             icon = { Icon(Icons.Outlined.AutoAwesome, null) },
+        NavigationDrawerItem(
+            icon = { Icon(Icons.Default.PlayArrow, null) },
+            label = { Text("Предпросмотр") },
+            selected = false,
+            onClick = { scope.launch { drawerState.close() }; onOpenPreview() },
+        )
+        NavigationDrawerItem(
+            icon = { Icon(Icons.Default.Share, null) },
+            label = { Text("Экспорт") },
+            selected = false,
+            onClick = { scope.launch { drawerState.close() }; onOpenExport() },
+        )
             label = { Text("AI-чат") },
             selected = false,
             onClick = { scope.launch { drawerState.close() }; onOpenChat() },
