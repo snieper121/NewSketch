@@ -2,7 +2,7 @@
 
 Мобильная IDE для создания Android Compose-приложений на устройстве (API 29–36+).
 
-## Документы (11)
+## Документы (16)
 
 | # | Файл | Содержание |
 |---|------|-----------|
@@ -18,6 +18,59 @@
 | 09 | [09-risks-and-compatibility.md](09-risks-and-compatibility.md) | 19 рисков, supply chain, legal, contingency plans |
 | 10 | [10-current-state-analysis.md](10-current-state-analysis.md) | Что уже есть в проекте, что не хватает |
 | 11 | [11-next-steps.md](11-next-steps.md) | Пошаговый план реализации (7 шагов) |
+| 12 | [12-additional-concerns.md](12-additional-concerns.md) | Дополнительные вопросы |
+| 13 | [13-toolchain-sources-and-order.md](13-toolchain-sources-and-order.md) | Источники toolchain, порядок загрузки |
+| 14 | [14-implementation-order.md](14-implementation-order.md) | Подробный порядок реализации |
+| 15 | [15-ui-design.md](15-ui-design.md) | UI/UX дизайн-спецификация, wireframes, оптимизация |
+
+## Экраны приложения (9 текущих + 5 дополнительных)
+
+### Текущие экраны (реализованы)
+
+| # | Экран | Назначение | Статус |
+|---|-------|-----------|--------|
+| 1 | ProjectsScreen | Список проектов, создание, удаление | ✅ Рабочий |
+| 2 | EditorScreen | Визуальный редактор + код | ✅ Рабочий |
+| 3 | ChatScreen | AI ассистент | ✅ Рабочий |
+| 4 | BuildScreen | Сборка APK, лог, установка | ✅ Рабочий |
+| 5 | SettingsScreen | API key, model, base URL | ✅ Рабочий |
+| 6 | ProjectSettingsScreen | Package, SDK, permissions | ⚠️ Мокап |
+| 7 | ScreenManagerScreen | Управление экранами | ⚠️ Мокап |
+| 8 | ResourceManagerScreen | Цвета, строки, drawable | ⚠️ Мокап |
+| 9 | StateLogicScreen | Переменные, события | ⚠️ Мокап |
+
+### Дополнительные экраны (необходимы)
+
+| # | Экран | Назначение | Приоритет |
+|---|-------|-----------|-----------|
+| 10 | WidgetPropertySheet | Свойства выбранного виджета (bottom sheet) | Высокий |
+| 11 | EventEditorScreen | Редактор событий (onClick, onValueChange) | Высокий |
+| 12 | ComponentManagerScreen | Управление компонентами (API, DB) | Средний |
+| 13 | PreviewScreen | Предпросмотр приложения | Средний |
+| 14 | ExportScreen | Экспорт в Gradle проект | Низкий |
+
+### Навигационный граф
+
+```
+ProjectsScreen
+    ├── [click project] → EditorScreen
+    ├── [click Build] → BuildScreen
+    └── [click Settings] → SettingsScreen
+
+EditorScreen (главный экран редактора)
+    ├── [drawer: Chat] → ChatScreen
+    ├── [drawer: Screens] → ScreenManagerScreen
+    ├── [drawer: State/Logic] → StateLogicScreen
+    ├── [drawer: Resources] → ResourceManagerScreen
+    ├── [drawer: Build] → BuildScreen
+    ├── [drawer: Settings] → ProjectSettingsScreen
+    ├── [select widget] → WidgetPropertySheet (bottom sheet)
+    └── [click event] → EventEditorScreen
+
+BuildScreen
+    ├── [Install] → System installer
+    └── [Back] → popBackStack()
+```
 
 ## Порядок чтения
 
@@ -28,14 +81,15 @@
 
 **Для реализации:**
 4. `10-current-state-analysis` — что уже есть
-5. `01-architecture` — как устроено
-6. `04-data-model` — формат данных
-7. `05-code-generation` — JSON → Kotlin
-8. `02-build-toolchain` — инструменты
-9. `06-build-pipeline` — как собираем APK
-10. `07-ai-integration` — AI-ассистент
-11. `08-testing` — как проверяем
-12. `09-risks` — что может пойти не так
+5. `15-ui-design` — как должны выглядеть экраны
+6. `01-architecture` — как устроено
+7. `04-data-model` — формат данных
+8. `05-code-generation` — JSON → Kotlin
+9. `02-build-toolchain` — инструменты
+10. `06-build-pipeline` — как собираем APK
+11. `07-ai-integration` — AI-ассистент
+12. `08-testing` — как проверяем
+13. `09-risks` — что может пойти не так
 
 ## Первый шаг
 
