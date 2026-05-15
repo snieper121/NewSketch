@@ -35,11 +35,13 @@ class ProjectModelRepository(
      */
     suspend fun createProject(
         projectId: String,
+        name: String,
         packageName: String,
         initialScreen: ScreenJson = defaultMainScreen(),
     ): ProjectJson = withContext(Dispatchers.IO) {
         storage.createDesignDir(projectId)
         val project = ProjectJson(
+            name = name,
             packageName = packageName,
             screens = listOf(initialScreen),
         )
