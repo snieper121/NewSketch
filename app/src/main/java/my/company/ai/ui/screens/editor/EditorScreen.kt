@@ -429,8 +429,6 @@ private fun DrawerNavigationPanel(
             onClick = { scope.launch { drawerState.close() }; onOpenBuild() },
         )
         NavigationDrawerItem(
-            icon = { Icon(Icons.Outlined.AutoAwesome, null) },
-        NavigationDrawerItem(
             icon = { Icon(Icons.Default.PlayArrow, null) },
             label = { Text("Предпросмотр") },
             selected = false,
@@ -456,8 +454,6 @@ private fun DrawerNavigationPanel(
         )
     }
 }
-// ============================================================
-
 @Composable
 private fun CodeEditor(
     content: String,
