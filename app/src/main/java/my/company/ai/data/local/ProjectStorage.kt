@@ -62,7 +62,6 @@ class ProjectStorage(context: Context) {
     /**
      * Сериализует объект в JSON-файл проекта.
      */
-    @Suppress("RemoveExplicitTypeArguments")
     suspend inline fun <reified T> writeJson(
         projectId: String,
         relativePath: String,
@@ -70,7 +69,12 @@ class ProjectStorage(context: Context) {
     ) = withContext(Dispatchers.IO) {
         val file = File(projectDir(projectId), relativePath)
         file.parentFile?.mkdirs()
-        file.writeText(my.company.ai.data.json.AppJson.encodeToString<T>(value))
+        file.writeText(
+            my.company.ai.data.json.AppJson.encodeToString(
+                kotlinx.serialization.serializer(),
+                value,
+            )
+        )
     }
 
     /**
