@@ -1,12 +1,11 @@
 package my.company.ai.ui.screens.editor
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,9 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Widgets
@@ -34,14 +33,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import my.company.ai.data.model.WidgetType
 
 /**
- * Визуальный канвас: рекурсивно рендерит дерево виджетов.
+ * Canvas в рамке телефона — рендерит виджеты как в реальном приложении.
  *
+ * Рамка занимает почти весь экран редактора с отступами 12dp.
  * Tap на виджет → выделение + BottomPropertyPanel.
- * Кнопка удаления → удаление виджета из списка.
  */
 @Composable
 fun DesignCanvas(
@@ -51,31 +51,82 @@ fun DesignCanvas(
     onRemoveAt: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (widgets.isEmpty()) {
-        EmptyCanvas(modifier)
-        return
-    }
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(12.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        itemsIndexed(widgets, key = { idx, _ -> idx }) { idx, widget ->
-            WidgetPreview(
-                widget = widget,
-                isSelected = idx == selectedIndex,
-                onClick = { onSelect(idx) },
-                onRemove = { onRemoveAt(idx) },
-                depth = 0,
+        PhoneCanvas(
+            widgets = widgets,
+            selectedIndex = selectedIndex,
+            onSelect = onSelect,
+            onRemoveAt = onRemoveAt,
+        )
+    }
+}
+
+/**
+ * Рамка телефона с canvas внутри.
+ */
+@Composable
+private fun PhoneCanvas(
+    widgets: List<WidgetItem>,
+    selectedIndex: Int?,
+    onSelect: (Int) -> Unit,
+    onRemoveAt: (Int) -> Unit,
+) {
+    val shape = RoundedCornerShape(24.dp)
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .clip(shape)
+            .border(4.dp, MaterialTheme.colorScheme.outline, shape)
+            .background(MaterialTheme.colorScheme.surface),
+    ) {
+        // Status bar
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(24.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                "9:41",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+
+        // Контент
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 24.dp),
+        ) {
+            if (widgets.isEmpty()) {
+                EmptyCanvas()
+            } else {
+                CanvasContent(
+                    widgets = widgets,
+                    selectedIndex = selectedIndex,
+                    onSelect = onSelect,
+                    onRemoveAt = onRemoveAt,
+                )
+            }
         }
     }
 }
 
+/**
+ * Пустое состояние canvas.
+ */
 @Composable
-private fun EmptyCanvas(modifier: Modifier) {
+private fun EmptyCanvas() {
     Box(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(32.dp),
         contentAlignment = Alignment.Center,
@@ -97,154 +148,209 @@ private fun EmptyCanvas(modifier: Modifier) {
 }
 
 /**
- * Рекурсивный рендер виджета с поддержкой вложенности.
- *
- * @param depth уровень вложенности (0 = корень)
+ * Контент canvas — рендерит виджеты как в реальном приложении.
  */
 @Composable
-private fun WidgetPreview(
+private fun CanvasContent(
+    widgets: List<WidgetItem>,
+    selectedIndex: Int?,
+    onSelect: (Int) -> Unit,
+    onRemoveAt: (Int) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        widgets.forEachIndexed { idx, widget ->
+            CanvasWidget(
+                widget = widget,
+                isSelected = idx == selectedIndex,
+                onClick = { onSelect(idx) },
+                onRemove = { onRemoveAt(idx) },
+            )
+        }
+    }
+}
+
+/**
+ * Рендер виджета на canvas — как в реальном приложении.
+ *
+ * Tap → выделение (рамка + кнопка удаления).
+ * Виджет рендерится как реальный Compose элемент.
+ */
+@Composable
+private fun CanvasWidget(
     widget: WidgetItem,
     isSelected: Boolean,
     onClick: () -> Unit,
     onRemove: () -> Unit,
-    depth: Int,
 ) {
-    val shape = RoundedCornerShape(8.dp)
+    val shape = RoundedCornerShape(4.dp)
     val baseModifier = Modifier
         .fillMaxWidth()
-        .padding(start = (depth * 16).dp) // Отступ для вложенности
+        .clickable { onClick() }
 
-    val cardModifier = if (isSelected) {
-        baseModifier
-            .border(BorderStroke(2.dp, MaterialTheme.colorScheme.primary), shape)
-            .clickable { onClick() }
+    val widgetModifier = if (isSelected) {
+        baseModifier.border(2.dp, MaterialTheme.colorScheme.primary, shape)
     } else {
-        baseModifier.clickable { onClick() }
+        baseModifier
     }
 
-    Card(
-        modifier = cardModifier,
-        shape = shape,
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected)
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            else
-                MaterialTheme.colorScheme.surfaceVariant,
-        ),
-    ) {
-        Column(Modifier.padding(12.dp)) {
-            // Заголовок виджета
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
+    Box(modifier = widgetModifier) {
+        // Рендер виджета
+        WidgetContent(widget)
+
+        // Кнопка удаления при выделении
+        if (isSelected) {
+            IconButton(
+                onClick = onRemove,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(4.dp)
+                    .height(24.dp)
+                    .width(24.dp),
             ) {
-                Text(
-                    widget.type.displayName,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (isSelected)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f),
+                Icon(
+                    Icons.Default.Close,
+                    "Удалить",
+                    modifier = Modifier.height(16.dp),
+                    tint = MaterialTheme.colorScheme.error,
                 )
-                if (widget.properties.containsKey("text")) {
-                    Text(
-                        "\"${widget.properties["text"]}\"",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                IconButton(onClick = onRemove, modifier = Modifier.height(24.dp)) {
-                    Icon(Icons.Default.Close, "Удалить", modifier = Modifier.height(16.dp))
-                }
-            }
-
-            HorizontalDivider()
-            Spacer(Modifier.height(8.dp))
-
-            // Превью содержимого
-            Box(Modifier.padding(4.dp)) {
-                renderPreview(widget)
             }
         }
     }
 }
 
 /**
- * Рекурсивный рендер превью виджета.
+ * Рекурсивный рендер содержимого виджета.
  *
- * Контейнеры (Column, Row, Box) рендерят своих children рекурсивно.
+ * Виджеты рендерятся как реальные Compose элементы:
+ * - Text → Text
+ * - Button → Button
+ * - TextField → OutlinedTextField
+ * - Column → Column (вертикальный список)
+ * - Row → Row (горизонтальный список)
+ * - Box → Box (наложение)
  */
 @Composable
-private fun renderPreview(widget: WidgetItem) {
+private fun WidgetContent(widget: WidgetItem) {
     val text = widget.properties["text"] ?: widget.type.defaultText
     when (widget.type) {
-        WidgetType.Text -> Text(text)
-        WidgetType.Button -> Button(onClick = {}) { Text(text) }
+        WidgetType.Text -> Text(
+            text,
+            modifier = Modifier.padding(8.dp),
+        )
+        WidgetType.Button -> Button(
+            onClick = {},
+            modifier = Modifier.padding(8.dp),
+        ) { Text(text) }
         WidgetType.TextField -> OutlinedTextField(
             value = widget.properties["value"] ?: "",
             onValueChange = {},
-            placeholder = { Text(widget.properties["label"] ?: "Поле ввода") },
-            modifier = Modifier.fillMaxWidth(),
+            label = { Text(widget.properties["label"] ?: "") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
         )
         WidgetType.Image -> Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(96.dp),
+                .height(120.dp)
+                .padding(8.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
-        ) { Text("[ image ]", color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        WidgetType.Icon -> Icon(Icons.Default.Widgets, contentDescription = null)
-        WidgetType.Checkbox -> Row(verticalAlignment = Alignment.CenterVertically) {
+        ) { Text("[ Image ]", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        WidgetType.Icon -> Icon(
+            Icons.Default.Widgets,
+            contentDescription = null,
+            modifier = Modifier.padding(8.dp),
+        )
+        WidgetType.Checkbox -> Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(8.dp),
+        ) {
             Checkbox(checked = false, onCheckedChange = {})
+            Spacer(Modifier.width(8.dp))
             Text(text)
         }
-        WidgetType.Switch -> Switch(checked = false, onCheckedChange = {})
-        WidgetType.Divider -> HorizontalDivider()
-        WidgetType.Spacer -> Spacer(Modifier.height(16.dp))
-        WidgetType.Card -> Card(Modifier.fillMaxWidth()) {
-            Text("Карточка", Modifier.padding(16.dp))
+        WidgetType.Switch -> Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(8.dp),
+        ) {
+            Switch(checked = false, onCheckedChange = {})
+            Spacer(Modifier.width(8.dp))
+            Text(text)
         }
-        // Контейнеры — рекурсивный рендер
-        WidgetType.Column -> ContainerPreview("Column", widget.children)
-        WidgetType.Row -> ContainerPreview("Row", widget.children)
-        WidgetType.Box -> ContainerPreview("Box", widget.children)
-    }
-}
-
-/**
- * Превью контейнера с рекурсивным рендером children.
- */
-@Composable
-private fun ContainerPreview(name: String, children: List<WidgetItem>) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(
-                BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                RoundedCornerShape(4.dp),
-            )
-            .padding(8.dp),
-    ) {
-        Text(
-            name,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (children.isEmpty()) {
-            Text(
-                "(пусто)",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        } else {
-            children.forEach { child ->
-                WidgetPreview(
-                    widget = child,
-                    isSelected = false,
-                    onClick = { /* TODO: выбор дочернего виджета */ },
-                    onRemove = { /* TODO: удаление дочернего виджета */ },
-                    depth = 0, // Вложенные виджеты рендерятся внутри контейнера
+        WidgetType.Divider -> HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+        WidgetType.Spacer -> Spacer(Modifier.height(16.dp))
+        WidgetType.Card -> Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
+        ) {
+            Column(Modifier.padding(16.dp)) {
+                if (widget.children.isEmpty()) {
+                    Text("Card", style = MaterialTheme.typography.bodySmall)
+                } else {
+                    widget.children.forEach { child -> WidgetContent(child) }
+                }
+            }
+        }
+        // Контейнеры — реальный layout
+        WidgetType.Column -> Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            if (widget.children.isEmpty()) {
+                Text(
+                    "(пустой Column)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(8.dp),
                 )
+            } else {
+                widget.children.forEach { child -> WidgetContent(child) }
+            }
+        }
+        WidgetType.Row -> Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            if (widget.children.isEmpty()) {
+                Text(
+                    "(пустой Row)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(8.dp),
+                )
+            } else {
+                widget.children.forEach { child -> WidgetContent(child) }
+            }
+        }
+        WidgetType.Box -> Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp),
+        ) {
+            if (widget.children.isEmpty()) {
+                Text(
+                    "(пустой Box)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(8.dp),
+                )
+            } else {
+                widget.children.forEach { child -> WidgetContent(child) }
             }
         }
     }
