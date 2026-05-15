@@ -113,3 +113,23 @@ BuildScreen
 - Generated apps: Android 5+ (API 21+, выбирает пользователь)
 - Язык: Kotlin 100%, Jetpack Compose
 - Сборка: on-device, без Gradle, без root
+
+---
+
+## Redesign редактора (Sketchware Pro аналог)
+
+См. [16-editor-redesign.md](16-editor-redesign.md) — полная спецификация нового EditorScreen.
+
+**Ключевые изменения:**
+- Палитра виджетов переносится из drawer вниз экрана
+- Canvas становится drag-and-drop областью
+- Bottom tabs: View / Logic / Component
+- PropertyEditorSheet подключается при выборе виджета
+- Event Editor встроенный в Logic tab
+
+**Не хватает экранов:**
+- PropertyEditorSheet (bottom sheet) — нужен для свойств виджета
+- EventEditorPanel — для редактирования событий
+- ComponentManagerPanel — для управления компонентами
+- PreviewScreen — предпросмотр приложения
+- ExportScreen — экспорт в Gradle проект
