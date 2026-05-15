@@ -1,5 +1,6 @@
 package my.company.ai.build.model
 
+import kotlinx.serialization.json.Json
 import java.io.File
 
 /**
@@ -30,6 +31,12 @@ class BuildContext(
     val packageName: String,
     val minSdk: Int = 29,
     val targetSdk: Int = 36,
+    val json: Json = Json {
+        prettyPrint = true
+        ignoreUnknownKeys = true
+        isLenient = true
+        namingStrategy = kotlinx.serialization.json.JsonNamingStrategy.SnakeCase
+    },
 ) {
     val intermediateDir: File = File(buildDir, "intermediates").apply { mkdirs() }
     val classesDir: File = File(buildDir, "classes").apply { mkdirs() }
