@@ -4,6 +4,7 @@ import my.company.ai.build.BuildPhase
 import my.company.ai.build.model.BuildContext
 import my.company.ai.build.model.PhaseResult
 import my.company.ai.build.toolchain.ToolchainManager
+import java.io.File
 import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
