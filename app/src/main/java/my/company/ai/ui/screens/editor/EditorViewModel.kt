@@ -185,6 +185,28 @@ class EditorViewModel(
         }
     }
 
+
+    /**
+     * Перемещает виджет из одной позиции в другую.
+     */
+    fun moveWidget(fromIndex: Int, toIndex: Int) {
+        _uiState.update { st ->
+            val widgets = st.widgets.toMutableList()
+            if (fromIndex !in widgets.indices || toIndex !in widgets.indices) return@update st
+            val item = widgets.removeAt(fromIndex)
+            widgets.add(toIndex, item)
+            // Обновляем selectedWidgetIndex если выделенный виджет перемещён
+            val newSelected = when (st.selectedWidgetIndex) {
+                fromIndex -> toIndex
+                in minOf(fromIndex, toIndex)..maxOf(fromIndex, toIndex) -> {
+                    if (fromIndex < toIndex) st.selectedWidgetIndex!! - 1
+                    else st.selectedWidgetIndex!! + 1
+                }
+                else -> st.selectedWidgetIndex
+            }
+            st.copy(widgets = widgets, selectedWidgetIndex = newSelected)
+        }
+    }
     fun selectWidget(index: Int) {
         _uiState.update { it.copy(selectedWidgetIndex = index, showPropertyEditor = true) }
     }

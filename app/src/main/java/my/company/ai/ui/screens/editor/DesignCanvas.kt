@@ -3,6 +3,7 @@ package my.company.ai.ui.screens.editor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -31,17 +34,32 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import my.company.ai.data.model.WidgetType
+import kotlin.math.roundToInt
 
 /**
  * Canvas в рамке телефона — рендерит виджеты как в реальном приложении.
  *
- * Рамка занимает почти весь экран редактора с отступами 12dp.
- * Tap на виджет → выделение + BottomPropertyPanel.
+ * Поддерживает:
+ * - Tap на виджет → выделение + BottomPropertyPanel
+ * - Long-press на drag handle → перетаскивание
+ * - Drop между виджетами → перемещение
  */
 @Composable
 fun DesignCanvas(
@@ -49,8 +67,15 @@ fun DesignCanvas(
     selectedIndex: Int?,
     onSelect: (Int) -> Unit,
     onRemoveAt: (Int) -> Unit,
+    onMove: (Int, Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Состояние drag-and-drop
+    var draggingIndex by remember { mutableStateOf<Int?>(null) }
+    var dragOffset by remember { mutableFloatStateOf(0f) }
+    var dropTargetIndex by remember { mutableStateOf<Int?>(null) }
+    var widgetPositions by remember { mutableStateOf(mapOf<Int, Float>()) }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -60,8 +85,52 @@ fun DesignCanvas(
         PhoneCanvas(
             widgets = widgets,
             selectedIndex = selectedIndex,
+            draggingIndex = draggingIndex,
+            dragOffset = dragOffset,
+            dropTargetIndex = dropTargetIndex,
+            widgetPositions = widgetPositions,
             onSelect = onSelect,
             onRemoveAt = onRemoveAt,
+            onDragStart = { index ->
+                draggingIndex = index
+                dragOffset = 0f
+                dropTargetIndex = null
+            },
+            onDrag = { offset ->
+                dragOffset += offset
+                // Определяем drop target на основе позиции
+                val currentIdx = draggingIndex ?: return@PhoneCanvas
+                val currentPos = widgetPositions[currentIdx] ?: return@PhoneCanvas
+                val targetY = currentPos + dragOffset
+
+                // Ищем ближайшую позицию для вставки
+                var bestIndex = currentIdx
+                var bestDistance = Float.MAX_VALUE
+                widgetPositions.forEach { (idx, pos) ->
+                    if (idx != currentIdx) {
+                        val dist = kotlin.math.abs(targetY - pos)
+                        if (dist < bestDistance) {
+                            bestDistance = dist
+                            bestIndex = if (targetY > pos) idx + 1 else idx
+                        }
+                    }
+                }
+                dropTargetIndex = bestIndex.coerceIn(0, widgets.size)
+            },
+            onDragEnd = {
+                val from = draggingIndex
+                val to = dropTargetIndex
+                if (from != null && to != null && from != to) {
+                    val adjustedTo = if (to > from) to - 1 else to
+                    onMove(from, adjustedTo)
+                }
+                draggingIndex = null
+                dragOffset = 0f
+                dropTargetIndex = null
+            },
+            onWidgetPosition = { index, y ->
+                widgetPositions = widgetPositions + (index to y)
+            },
         )
     }
 }
@@ -73,8 +142,16 @@ fun DesignCanvas(
 private fun PhoneCanvas(
     widgets: List<WidgetItem>,
     selectedIndex: Int?,
+    draggingIndex: Int?,
+    dragOffset: Float,
+    dropTargetIndex: Int?,
+    widgetPositions: Map<Int, Float>,
     onSelect: (Int) -> Unit,
     onRemoveAt: (Int) -> Unit,
+    onDragStart: (Int) -> Unit,
+    onDrag: (Float) -> Unit,
+    onDragEnd: () -> Unit,
+    onWidgetPosition: (Int, Float) -> Unit,
 ) {
     val shape = RoundedCornerShape(24.dp)
 
@@ -112,8 +189,15 @@ private fun PhoneCanvas(
                 CanvasContent(
                     widgets = widgets,
                     selectedIndex = selectedIndex,
+                    draggingIndex = draggingIndex,
+                    dragOffset = dragOffset,
+                    dropTargetIndex = dropTargetIndex,
                     onSelect = onSelect,
                     onRemoveAt = onRemoveAt,
+                    onDragStart = onDragStart,
+                    onDrag = onDrag,
+                    onDragEnd = onDragEnd,
+                    onWidgetPosition = onWidgetPosition,
                 )
             }
         }
@@ -148,14 +232,21 @@ private fun EmptyCanvas() {
 }
 
 /**
- * Контент canvas — рендерит виджеты как в реальном приложении.
+ * Контент canvas — рендерит виджеты с drag-and-drop.
  */
 @Composable
 private fun CanvasContent(
     widgets: List<WidgetItem>,
     selectedIndex: Int?,
+    draggingIndex: Int?,
+    dragOffset: Float,
+    dropTargetIndex: Int?,
     onSelect: (Int) -> Unit,
     onRemoveAt: (Int) -> Unit,
+    onDragStart: (Int) -> Unit,
+    onDrag: (Float) -> Unit,
+    onDragEnd: () -> Unit,
+    onWidgetPosition: (Int, Float) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -165,21 +256,69 @@ private fun CanvasContent(
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         widgets.forEachIndexed { idx, widget ->
+            // Drop indicator перед виджетом
+            if (dropTargetIndex == idx) {
+                DropIndicator()
+            }
+
+            // Пропускаем перетаскиваемый виджет (он рендерится отдельно)
+            if (draggingIndex != idx) {
+                CanvasWidget(
+                    widget = widget,
+                    isSelected = idx == selectedIndex,
+                    onClick = { onSelect(idx) },
+                    onRemove = { onRemoveAt(idx) },
+                    onDragStart = { onDragStart(idx) },
+                    onDrag = onDrag,
+                    onDragEnd = onDragEnd,
+                    onPosition = { y -> onWidgetPosition(idx, y) },
+                )
+            }
+        }
+
+        // Drop indicator в конце
+        if (dropTargetIndex == widgets.size) {
+            DropIndicator()
+        }
+    }
+
+    // Перетаскиваемый виджет (поверх остальных)
+    if (draggingIndex != null && draggingIndex!! < widgets.size) {
+        Box(
+            modifier = Modifier
+                .offset { IntOffset(0, dragOffset.roundToInt()) }
+                .graphicsLayer { alpha = 0.8f }
+                .padding(8.dp),
+        ) {
             CanvasWidget(
-                widget = widget,
-                isSelected = idx == selectedIndex,
-                onClick = { onSelect(idx) },
-                onRemove = { onRemoveAt(idx) },
+                widget = widgets[draggingIndex!!],
+                isSelected = false,
+                onClick = {},
+                onRemove = {},
+                onDragStart = {},
+                onDrag = {},
+                onDragEnd = {},
+                onPosition = {},
             )
         }
     }
 }
 
 /**
- * Рендер виджета на canvas — как в реальном приложении.
- *
- * Tap → выделение (рамка + кнопка удаления).
- * Виджет рендерится как реальный Compose элемент.
+ * Индикатор места вставки.
+ */
+@Composable
+private fun DropIndicator() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(4.dp)
+            .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp)),
+    )
+}
+
+/**
+ * Рендер виджета на canvas с drag handle.
  */
 @Composable
 private fun CanvasWidget(
@@ -187,28 +326,65 @@ private fun CanvasWidget(
     isSelected: Boolean,
     onClick: () -> Unit,
     onRemove: () -> Unit,
+    onDragStart: () -> Unit,
+    onDrag: (Float) -> Unit,
+    onDragEnd: () -> Unit,
+    onPosition: (Float) -> Unit,
 ) {
     val shape = RoundedCornerShape(4.dp)
-    val baseModifier = Modifier
-        .fillMaxWidth()
-        .clickable { onClick() }
 
-    val widgetModifier = if (isSelected) {
-        baseModifier.border(2.dp, MaterialTheme.colorScheme.primary, shape)
-    } else {
-        baseModifier
-    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .onGloballyPositioned { coordinates ->
+                onPosition(coordinates.positionInRoot().y)
+            }
+            .then(
+                if (isSelected) {
+                    Modifier.border(2.dp, MaterialTheme.colorScheme.primary, shape)
+                } else {
+                    Modifier
+                }
+            )
+            .clickable { onClick() },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // Drag handle
+        Box(
+            modifier = Modifier
+                .width(32.dp)
+                .height(40.dp)
+                .pointerInput(Unit) {
+                    detectDragGesturesAfterLongPress(
+                        onDragStart = { onDragStart() },
+                        onDrag = { change, offset ->
+                            change.consume()
+                            onDrag(offset.y)
+                        },
+                        onDragEnd = { onDragEnd() },
+                        onDragCancel = { onDragEnd() },
+                    )
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Default.DragIndicator,
+                contentDescription = "Перетащить",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.height(20.dp),
+            )
+        }
 
-    Box(modifier = widgetModifier) {
-        // Рендер виджета
-        WidgetContent(widget)
+        // Содержимое виджета
+        Box(modifier = Modifier.weight(1f)) {
+            WidgetContent(widget)
+        }
 
         // Кнопка удаления при выделении
         if (isSelected) {
             IconButton(
                 onClick = onRemove,
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
                     .padding(4.dp)
                     .height(24.dp)
                     .width(24.dp),
@@ -226,14 +402,6 @@ private fun CanvasWidget(
 
 /**
  * Рекурсивный рендер содержимого виджета.
- *
- * Виджеты рендерятся как реальные Compose элементы:
- * - Text → Text
- * - Button → Button
- * - TextField → OutlinedTextField
- * - Column → Column (вертикальный список)
- * - Row → Row (горизонтальный список)
- * - Box → Box (наложение)
  */
 @Composable
 private fun WidgetContent(widget: WidgetItem) {
@@ -302,7 +470,6 @@ private fun WidgetContent(widget: WidgetItem) {
                 }
             }
         }
-        // Контейнеры — реальный layout
         WidgetType.Column -> Column(
             modifier = Modifier
                 .fillMaxWidth()

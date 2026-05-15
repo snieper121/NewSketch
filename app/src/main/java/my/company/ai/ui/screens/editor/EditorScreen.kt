@@ -236,6 +236,7 @@ fun EditorScreen(
                                         selectedIndex = state.selectedWidgetIndex,
                                         onSelect = viewModel::selectWidget,
                                         onRemoveAt = viewModel::removeWidgetAt,
+                                        onMove = viewModel::moveWidget,
                                         modifier = Modifier.fillMaxSize(),
                                     )
                                 }
