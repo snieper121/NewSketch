@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.DataObject
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,8 +41,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -218,25 +217,30 @@ fun EditorScreen(
                     if (state.activeTab == EditorTab.View && state.openedFile != null) {
                         EditorSymbolBar(onInsertSymbol = viewModel::insertTextAtCursor)
                     }
-                    NavigationBar {
-                        EditorTabItem(
-                            label = "View",
-                            icon = Icons.Default.Widgets,
-                            selected = state.activeTab == EditorTab.View,
-                            onClick = { viewModel.setActiveTab(EditorTab.View) },
-                        )
-                        EditorTabItem(
-                            label = "Logic",
-                            icon = Icons.Outlined.DataObject,
-                            selected = state.activeTab == EditorTab.Logic,
-                            onClick = { viewModel.setActiveTab(EditorTab.Logic) },
-                        )
-                        EditorTabItem(
-                            label = "Component",
-                            icon = Icons.Outlined.Build,
-                            selected = state.activeTab == EditorTab.Component,
-                            onClick = { viewModel.setActiveTab(EditorTab.Component) },
-                        )
+                    BottomAppBar {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                        ) {
+                            EditorTabItem(
+                                label = "View",
+                                icon = Icons.Default.Widgets,
+                                selected = state.activeTab == EditorTab.View,
+                                onClick = { viewModel.setActiveTab(EditorTab.View) },
+                            )
+                            EditorTabItem(
+                                label = "Logic",
+                                icon = Icons.Outlined.DataObject,
+                                selected = state.activeTab == EditorTab.Logic,
+                                onClick = { viewModel.setActiveTab(EditorTab.Logic) },
+                            )
+                            EditorTabItem(
+                                label = "Component",
+                                icon = Icons.Outlined.Build,
+                                selected = state.activeTab == EditorTab.Component,
+                                onClick = { viewModel.setActiveTab(EditorTab.Component) },
+                            )
+                        }
                     }
                 }
             },
@@ -337,12 +341,22 @@ private fun EditorTabItem(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    NavigationBarItem(
-        selected = selected,
-        onClick = onClick,
-        icon = { Icon(icon, contentDescription = label) },
-        label = { Text(label) },
-    )
+    IconButton(onClick = onClick) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                icon,
+                contentDescription = label,
+                tint = if (selected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (selected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }
 
 @Composable
