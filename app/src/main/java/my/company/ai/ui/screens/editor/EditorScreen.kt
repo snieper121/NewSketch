@@ -76,8 +76,6 @@ enum class DrawerPanel { Files, Widgets, Navigation }
 @Composable
 fun EditorScreen(
     projectId: String,
-    onOpenPreview: () -> Unit = {},
-    onOpenExport: () -> Unit = {},
     onBack: () -> Unit,
     onOpenChat: () -> Unit,
     onOpenBuild: () -> Unit,
