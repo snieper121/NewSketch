@@ -94,6 +94,9 @@ dependencies {
     // Ktor client — AI API
     implementation(libs.bundles.ktor)
 
+    // Codegen — KotlinPoet для генерации Kotlin-кода из JSON
+    implementation(libs.kotlinpoet)
+
     // Логирование
     implementation(libs.timber)
 
