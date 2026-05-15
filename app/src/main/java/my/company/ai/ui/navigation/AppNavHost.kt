@@ -49,6 +49,7 @@ fun AppNavHost(
             ProjectsScreen(
                 onOpenProject = { navController.navigate(Routes.editor(it)) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                onBuildProject = { navController.navigate(Routes.build(it)) },
             )
         }
 
@@ -58,6 +59,11 @@ fun AppNavHost(
                 projectId = id,
                 onBack = { navController.popBackStack() },
                 onOpenChat = { navController.navigate(Routes.chat(id)) },
+                onOpenBuild = { navController.navigate(Routes.build(id)) },
+                onOpenScreens = { navController.navigate(Routes.screenManager(id)) },
+                onOpenResources = { navController.navigate(Routes.resources(id)) },
+                onOpenStateLogic = { navController.navigate(Routes.stateLogic(id)) },
+                onOpenProjectSettings = { navController.navigate(Routes.projectSettings(id)) },
             )
         }
 

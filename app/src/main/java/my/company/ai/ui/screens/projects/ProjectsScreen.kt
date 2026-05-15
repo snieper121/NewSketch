@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -51,6 +52,7 @@ import my.company.ai.ui.ViewModelFactory
 fun ProjectsScreen(
     onOpenProject: (String) -> Unit,
     onOpenSettings: () -> Unit,
+    onBuildProject: (String) -> Unit,
     viewModel: ProjectsViewModel = viewModel(factory = ViewModelFactory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -93,6 +95,7 @@ fun ProjectsScreen(
                     projects = state.projects,
                     onOpen = onOpenProject,
                     onDelete = viewModel::deleteProject,
+                    onBuild = onBuildProject,
                 )
             }
         }
@@ -128,6 +131,7 @@ private fun ProjectList(
     projects: List<Project>,
     onOpen: (String) -> Unit,
     onDelete: (String) -> Unit,
+    onBuild: (String) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -135,7 +139,7 @@ private fun ProjectList(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         items(projects, key = { it.id }) { project ->
-            ProjectCard(project, onOpen, onDelete)
+            ProjectCard(project, onOpen, onDelete, onBuild)
         }
     }
 }
@@ -145,6 +149,7 @@ private fun ProjectCard(
     project: Project,
     onOpen: (String) -> Unit,
     onDelete: (String) -> Unit,
+    onBuild: (String) -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -163,6 +168,9 @@ private fun ProjectCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
+                IconButton(onClick = { onBuild(project.id) }) {
+                    Icon(Icons.Default.Build, contentDescription = "Собрать APK")
                 }
                 IconButton(onClick = { onDelete(project.id) }) {
                     Icon(Icons.Default.Delete, contentDescription = "Удалить")

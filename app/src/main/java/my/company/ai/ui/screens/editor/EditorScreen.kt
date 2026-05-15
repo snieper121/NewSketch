@@ -17,12 +17,20 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Widgets
+import androidx.compose.material.icons.outlined.AccountTree
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Build
+import androidx.compose.material.icons.outlined.DataObject
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -56,6 +64,11 @@ fun EditorScreen(
     projectId: String,
     onBack: () -> Unit,
     onOpenChat: () -> Unit,
+    onOpenBuild: () -> Unit,
+    onOpenScreens: () -> Unit,
+    onOpenResources: () -> Unit,
+    onOpenStateLogic: () -> Unit,
+    onOpenProjectSettings: () -> Unit,
     viewModel: EditorViewModel = viewModel(factory = ViewModelFactory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -193,6 +206,40 @@ fun EditorScreen(
                 }
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
+            bottomBar = {
+                NavigationBar {
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Outlined.AutoAwesome, contentDescription = null) },
+                        label = { Text("AI") },
+                        selected = false,
+                        onClick = onOpenChat,
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Outlined.AccountTree, contentDescription = null) },
+                        label = { Text("Экраны") },
+                        selected = false,
+                        onClick = onOpenScreens,
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Outlined.DataObject, contentDescription = null) },
+                        label = { Text("Состояние") },
+                        selected = false,
+                        onClick = onOpenStateLogic,
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Outlined.Image, contentDescription = null) },
+                        label = { Text("Ресурсы") },
+                        selected = false,
+                        onClick = onOpenResources,
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Outlined.Build, contentDescription = null) },
+                        label = { Text("Сборка") },
+                        selected = false,
+                        onClick = onOpenBuild,
+                    )
+                }
+            },
         ) { padding ->
             Box(
                 modifier = Modifier
