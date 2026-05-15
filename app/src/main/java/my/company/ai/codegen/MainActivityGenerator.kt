@@ -42,7 +42,7 @@ class MainActivityGenerator : CodeGenerator {
             .addStatement("val navController = %T()", ClassName("androidx.navigation.compose", "rememberNavController"))
             .beginControlFlow("%T(navController = navController, startDestination = %S)",
                 ClassName("androidx.navigation.compose", "NavHost"),
-                project.startScreenId ?: project.screens.firstOrNull()?.id ?: "home")
+                project.screens.find { it.isStart }?.id ?: project.screens.firstOrNull()?.id ?: "home")
 
         project.screens.forEach { screen ->
             composable.addStatement("composable(%S) { %N() }", screen.id, screen.id)

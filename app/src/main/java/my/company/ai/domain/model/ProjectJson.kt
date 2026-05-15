@@ -11,6 +11,7 @@ import kotlinx.serialization.json.JsonObject
 @Serializable
 data class ProjectJson(
     val schemaVersion: Int = 1,
+    val name: String,
     val packageName: String,
     val minSdk: Int = 29,
     val targetSdk: Int = 36,
