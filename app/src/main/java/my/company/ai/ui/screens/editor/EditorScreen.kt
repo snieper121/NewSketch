@@ -3,13 +3,13 @@ package my.company.ai.ui.screens.editor
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
@@ -127,6 +127,48 @@ fun EditorScreen(
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 Spacer(Modifier.height(8.dp))
 
+                // Навигационные кнопки
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    IconButton(
+                        onClick = { scope.launch { drawerState.close() }; onOpenChat() },
+                    ) {
+                        Icon(Icons.Outlined.AutoAwesome, contentDescription = "AI")
+                    }
+                    IconButton(
+                        onClick = { scope.launch { drawerState.close() }; onOpenScreens() },
+                    ) {
+                        Icon(Icons.Outlined.AccountTree, contentDescription = "Экраны")
+                    }
+                    IconButton(
+                        onClick = { scope.launch { drawerState.close() }; onOpenStateLogic() },
+                    ) {
+                        Icon(Icons.Outlined.DataObject, contentDescription = "Состояние")
+                    }
+                    IconButton(
+                        onClick = { scope.launch { drawerState.close() }; onOpenResources() },
+                    ) {
+                        Icon(Icons.Outlined.Image, contentDescription = "Ресурсы")
+                    }
+                    IconButton(
+                        onClick = { scope.launch { drawerState.close() }; onOpenBuild() },
+                    ) {
+                        Icon(Icons.Outlined.Build, contentDescription = "Сборка")
+                    }
+                    IconButton(
+                        onClick = { scope.launch { drawerState.close() }; onOpenProjectSettings() },
+                    ) {
+                        Icon(Icons.Outlined.Settings, contentDescription = "Настройки")
+                    }
+                }
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                Spacer(Modifier.height(8.dp))
+
                 when (state.drawerMode) {
                     DrawerMode.Files -> {
                         val tree = state.tree
@@ -212,12 +254,7 @@ fun EditorScreen(
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
-                EditorBottomToolbar(
-                    onOpenChat = onOpenChat,
-                    onOpenScreens = onOpenScreens,
-                    onOpenStateLogic = onOpenStateLogic,
-                    onOpenResources = onOpenResources,
-                    onOpenBuild = onOpenBuild,
+                EditorSymbolBar(
                     onInsertSymbol = { symbol ->
                         viewModel.insertTextAtCursor(symbol)
                     },
@@ -291,15 +328,10 @@ private fun CodeEditor(
 }
 
 /**
- * Нижняя панель редактора: кнопки навигации + символы для быстрой вставки.
+ * Панель символов редактора — отображается над экранной клавиатурой.
  */
 @Composable
-private fun EditorBottomToolbar(
-    onOpenChat: () -> Unit,
-    onOpenScreens: () -> Unit,
-    onOpenStateLogic: () -> Unit,
-    onOpenResources: () -> Unit,
-    onOpenBuild: () -> Unit,
+private fun EditorSymbolBar(
     onInsertSymbol: (String) -> Unit,
 ) {
     val symbols = listOf(
@@ -307,26 +339,12 @@ private fun EditorBottomToolbar(
         "_", "-", "+", "(", ")", "[", "]", "\\", "{", "}", "%",
     )
 
-    Column(
+    androidx.compose.foundation.layout.Box(
         modifier = Modifier
             .fillMaxWidth()
+            .imePadding()
             .padding(horizontal = 4.dp, vertical = 4.dp),
     ) {
-        // Навигационные закладки
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-        ) {
-            EditorNavChip(icon = { Icon(Icons.Outlined.AutoAwesome, null, Modifier.size(18.dp)) }, label = "AI", onClick = onOpenChat)
-            EditorNavChip(icon = { Icon(Icons.Outlined.AccountTree, null, Modifier.size(18.dp)) }, label = "Экраны", onClick = onOpenScreens)
-            EditorNavChip(icon = { Icon(Icons.Outlined.DataObject, null, Modifier.size(18.dp)) }, label = "Состояние", onClick = onOpenStateLogic)
-            EditorNavChip(icon = { Icon(Icons.Outlined.Image, null, Modifier.size(18.dp)) }, label = "Ресурсы", onClick = onOpenResources)
-            EditorNavChip(icon = { Icon(Icons.Outlined.Build, null, Modifier.size(18.dp)) }, label = "Сборка", onClick = onOpenBuild)
-        }
-
-        Spacer(Modifier.height(4.dp))
-
-        // Символы для быстрой вставки
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -347,21 +365,5 @@ private fun EditorBottomToolbar(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun EditorNavChip(
-    icon: @Composable () -> Unit,
-    label: String,
-    onClick: () -> Unit,
-) {
-    TextButton(
-        onClick = onClick,
-        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-    ) {
-        icon()
-        Spacer(Modifier.width(4.dp))
-        Text(label, style = MaterialTheme.typography.labelSmall)
     }
 }

@@ -17,6 +17,7 @@ import my.company.ai.build.phases.KotlinCompilePhase
 import my.company.ai.build.phases.ResourceCompilePhase
 import my.company.ai.build.phases.DexPhase
 import my.company.ai.build.phases.PackagePhase
+import my.company.ai.build.toolchain.ToolchainDownloader
 import my.company.ai.build.toolchain.ToolchainManager
 
 /**
@@ -81,6 +82,10 @@ class AppContainer(context: Context) {
 
     val toolchainManager: ToolchainManager by lazy {
         ToolchainManager(appContext)
+    }
+
+    val toolchainDownloader: ToolchainDownloader by lazy {
+        ToolchainDownloader(appContext)
     }
 
     val buildPipeline: BuildPipeline by lazy {

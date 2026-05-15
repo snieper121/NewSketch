@@ -13,6 +13,8 @@ import my.company.ai.build.model.BuildContext
 import my.company.ai.build.model.BuildProgress
 import my.company.ai.build.model.PhaseResult
 import my.company.ai.build.model.SampleProject
+import my.company.ai.build.toolchain.ToolchainDownloader
+import my.company.ai.build.toolchain.ToolchainManager
 import java.io.File
 
 sealed class BuildStatus {
@@ -25,16 +27,28 @@ sealed class BuildStatus {
 data class BuildUiState(
     val status: BuildStatus = BuildStatus.Idle,
     val logs: List<String> = emptyList(),
+    val isToolchainReady: Boolean = false,
+    val isDownloadingToolchain: Boolean = false,
+    val downloadProgress: Float = 0f,
 )
 
 class BuildViewModel(
     private val buildPipeline: BuildPipeline,
+    private val toolchainManager: ToolchainManager,
+    private val toolchainDownloader: ToolchainDownloader,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BuildUiState())
     val uiState: StateFlow<BuildUiState> = _uiState.asStateFlow()
 
     private var buildJob: Job? = null
+    private var downloadJob: Job? = null
+
+    init {
+        _uiState.update {
+            it.copy(isToolchainReady = toolchainManager.isToolchainReady())
+        }
+    }
 
     fun startBuild(projectId: String) {
         buildJob?.cancel()
@@ -55,6 +69,7 @@ class BuildViewModel(
         _uiState.value = BuildUiState(
             status = BuildStatus.Running("Подготовка...", 0f),
             logs = listOf("Начало сборки проекта: $projectId"),
+            isToolchainReady = toolchainManager.isToolchainReady(),
         )
 
         buildJob = viewModelScope.launch {
@@ -116,8 +131,27 @@ class BuildViewModel(
     }
 
     /**
-     * TODO: реализовать установку APK через PackageInstaller
-     * после интеграции реального toolchain (aapt2 + d8 + zipalign + apksigner).
+     * Загружает недостающие инструменты toolchain.
+     */
+    fun downloadToolchain() {
+        downloadJob?.cancel()
+        _uiState.update { it.copy(isDownloadingToolchain = true, downloadProgress = 0f) }
+
+        downloadJob = viewModelScope.launch {
+            // TODO: реализовать реальную загрузку через ToolchainDownloader
+            // M0: показываем placeholder
+            _uiState.update {
+                it.copy(
+                    isDownloadingToolchain = false,
+                    isToolchainReady = false,
+                    logs = it.logs + "Загрузка toolchain будет доступна после публикации релиза ai-ide-toolchain",
+                )
+            }
+        }
+    }
+
+    /**
+     * TODO: реализовать установку APK через PackageInstaller.
      */
     fun installApk() {
         _uiState.update {
@@ -127,6 +161,7 @@ class BuildViewModel(
 
     override fun onCleared() {
         buildJob?.cancel()
+        downloadJob?.cancel()
         super.onCleared()
     }
 }

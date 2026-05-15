@@ -39,6 +39,8 @@ val ViewModelFactory: ViewModelProvider.Factory = viewModelFactory {
     initializer {
         BuildViewModel(
             buildPipeline = container().buildPipeline,
+            toolchainManager = container().toolchainManager,
+            toolchainDownloader = container().toolchainDownloader,
         )
     }
 }
