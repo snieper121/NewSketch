@@ -36,7 +36,11 @@ val ViewModelFactory: ViewModelProvider.Factory = viewModelFactory {
         )
     }
     initializer { SettingsViewModel(container().settingsRepository) }
-    initializer { BuildViewModel() }
+    initializer {
+        BuildViewModel(
+            buildPipeline = container().buildPipeline,
+        )
+    }
 }
 
 private fun CreationExtras.container(): AppContainer =

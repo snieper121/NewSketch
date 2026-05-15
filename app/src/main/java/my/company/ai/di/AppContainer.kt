@@ -11,6 +11,13 @@ import my.company.ai.data.repository.AiRepository
 import my.company.ai.data.repository.ProjectRepository
 import my.company.ai.data.repository.SettingsRepository
 import my.company.ai.data.template.KotlinProjectTemplate
+import my.company.ai.build.BuildPipeline
+import my.company.ai.build.phases.CodeGenPhase
+import my.company.ai.build.phases.KotlinCompilePhase
+import my.company.ai.build.phases.ResourceCompilePhase
+import my.company.ai.build.phases.DexPhase
+import my.company.ai.build.phases.PackagePhase
+import my.company.ai.build.toolchain.ToolchainManager
 
 /**
  * Ручной контейнер зависимостей (ADR-004).
@@ -67,6 +74,24 @@ class AppContainer(context: Context) {
             projectDao = database.projectDao(),
             storage = projectStorage,
             template = projectTemplate,
+        )
+    }
+
+    // ---- Build Pipeline (M0) -----------------------------------------------
+
+    val toolchainManager: ToolchainManager by lazy {
+        ToolchainManager(appContext)
+    }
+
+    val buildPipeline: BuildPipeline by lazy {
+        BuildPipeline(
+            phases = listOf(
+                CodeGenPhase(),
+                KotlinCompilePhase(toolchainManager),
+                ResourceCompilePhase(toolchainManager),
+                DexPhase(toolchainManager),
+                PackagePhase(toolchainManager),
+            )
         )
     }
 }

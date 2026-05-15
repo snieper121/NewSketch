@@ -3,16 +3,18 @@ package my.company.ai.ui.screens.compiler
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import my.company.ai.build.BuildPipeline
+import my.company.ai.build.model.BuildContext
+import my.company.ai.build.model.BuildProgress
+import my.company.ai.build.model.PhaseResult
+import my.company.ai.build.model.SampleProject
+import java.io.File
 
-/**
- * Статусы сборки для UI.
- */
 sealed class BuildStatus {
     data object Idle : BuildStatus()
     data class Running(val phase: String, val progress: Float) : BuildStatus()
@@ -20,70 +22,89 @@ sealed class BuildStatus {
     data class Error(val message: String) : BuildStatus()
 }
 
-/**
- * UI-состояние экрана сборки.
- */
 data class BuildUiState(
     val status: BuildStatus = BuildStatus.Idle,
     val logs: List<String> = emptyList(),
 )
 
-/**
- * ViewModel для экрана сборки (M0 PoC).
- *
- * Пока — заглушка, имитирующая фазы сборки.
- * После реализации BuildPipeline будет вызывать реальный pipeline.
- */
-class BuildViewModel : ViewModel() {
+class BuildViewModel(
+    private val buildPipeline: BuildPipeline,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BuildUiState())
-    val uiState: StateFlow<BuildUiState> = _uiState
+    val uiState: StateFlow<BuildUiState> = _uiState.asStateFlow()
 
     private var buildJob: Job? = null
 
-    /**
-     * Запуск сборки (M0: hardcoded Hello World).
-     */
     fun startBuild(projectId: String) {
         buildJob?.cancel()
-        _uiState.value = BuildUiState(status = BuildStatus.Running("Подготовка...", 0f), logs = mutableListOf("Начало сборки проекта: $projectId"))
+
+        val buildDir = File(System.getProperty("java.io.tmpdir"), "ai_ide_build_$projectId").apply { mkdirs() }
+        val projectDir = File(buildDir, "project").apply { mkdirs() }
+        val outputApk = File(buildDir, "app.apk")
+
+        val context = BuildContext(
+            projectDir = projectDir,
+            buildDir = buildDir,
+            outputApk = outputApk,
+            packageName = SampleProject.PACKAGE,
+            minSdk = SampleProject.MIN_SDK,
+            targetSdk = SampleProject.TARGET_SDK,
+        )
+
+        _uiState.value = BuildUiState(
+            status = BuildStatus.Running("Подготовка...", 0f),
+            logs = listOf("Начало сборки проекта: $projectId"),
+        )
 
         buildJob = viewModelScope.launch {
-            val phases = listOf(
-                "Code generation" to 0.05f,
-                "Kotlin compilation" to 0.40f,
-                "Resource compilation (aapt2)" to 0.55f,
-                "Resource linking (aapt2)" to 0.65f,
-                "Java compilation (ecj)" to 0.70f,
-                "Dex (d8)" to 0.85f,
-                "Merge APK" to 0.90f,
-                "Zipalign" to 0.93f,
-                "Signing" to 0.97f,
-                "Готово" to 1.0f,
-            )
-
             val startTime = System.currentTimeMillis()
             val logs = mutableListOf<String>()
 
-            for ((name, progress) in phases) {
-                if (!isActive) break
-
-                delay(300) // имитация работы
-                logs += "[$name] ..."
-                _uiState.update { it.copy(status = BuildStatus.Running(name, progress), logs = logs.toList()) }
+            launch {
+                buildPipeline.logs.collect { log ->
+                    logs += log
+                    _uiState.update { it.copy(logs = logs.toList()) }
+                }
             }
 
-            if (isActive) {
+            launch {
+                buildPipeline.progress.collect { progress: BuildProgress ->
+                    val progressFloat = if (progress.totalSteps > 0) {
+                        progress.step.toFloat() / progress.totalSteps
+                    } else 0f
+                    _uiState.update {
+                        it.copy(status = BuildStatus.Running(progress.phaseName, progressFloat))
+                    }
+                }
+            }
+
+            buildPipeline.run(context)
+
+            buildPipeline.result.collect { result: PhaseResult ->
                 val duration = System.currentTimeMillis() - startTime
-                logs += "Сборка завершена успешно."
-                _uiState.update { it.copy(status = BuildStatus.Success(duration, null), logs = logs.toList()) }
+                when (result) {
+                    is PhaseResult.Success -> {
+                        _uiState.update {
+                            it.copy(
+                                status = BuildStatus.Success(duration, outputApk.absolutePath),
+                                logs = it.logs + "Сборка завершена успешно за ${duration}ms",
+                            )
+                        }
+                    }
+                    is PhaseResult.Failure -> {
+                        _uiState.update {
+                            it.copy(
+                                status = BuildStatus.Error(result.message),
+                                logs = it.logs + "ОШИБКА: ${result.message}",
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 
-    /**
-     * Отмена сборки.
-     */
     fun cancelBuild() {
         buildJob?.cancel()
         _uiState.update {
@@ -94,12 +115,14 @@ class BuildViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Установка APK.
-     */
     fun installApk() {
         _uiState.update {
             it.copy(logs = it.logs + "Запрос на установку APK...")
         }
+    }
+
+    override fun onCleared() {
+        buildJob?.cancel()
+        super.onCleared()
     }
 }
