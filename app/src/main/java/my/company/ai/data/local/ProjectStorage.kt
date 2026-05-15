@@ -45,6 +45,40 @@ class ProjectStorage(context: Context) {
             file.writeText(content)
         }
 
+    /**
+     * Читает и парсит JSON-файл проекта.
+     */
+    suspend inline fun <reified T> readJson(projectId: String, relativePath: String): T? =
+        withContext(Dispatchers.IO) {
+            try {
+                val file = File(projectDir(projectId), relativePath)
+                if (!file.exists()) return@withContext null
+                my.company.ai.data.json.AppJson.decodeFromString<T>(file.readText())
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+    /**
+     * Сериализует объект в JSON-файл проекта.
+     */
+    suspend inline fun <reified T> writeJson(
+        projectId: String,
+        relativePath: String,
+        value: T,
+    ) = withContext(Dispatchers.IO) {
+        val file = File(projectDir(projectId), relativePath)
+        file.parentFile?.mkdirs()
+        file.writeText(my.company.ai.data.json.AppJson.encodeToString(value))
+    }
+
+    /**
+     * Создаёт директорию design/ для JSON-моделей проекта.
+     */
+    suspend fun createDesignDir(projectId: String): File = withContext(Dispatchers.IO) {
+        File(projectDir(projectId), "design").apply { mkdirs() }
+    }
+
     private fun buildNode(root: File, file: File): ProjectFile {
         val rel = file.relativeTo(root).invariantSeparatorsPath
         if (!file.isDirectory) {
