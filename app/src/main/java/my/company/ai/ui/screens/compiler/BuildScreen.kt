@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import my.company.ai.ui.ViewModelFactory
@@ -53,6 +54,7 @@ fun BuildScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
+    val context = LocalContext.current
 
     // Автопрокрутка лога
     LaunchedEffect(state.logs.size) {
@@ -145,7 +147,7 @@ fun BuildScreen(
                     if (state.status is BuildStatus.Success) {
                         Spacer(Modifier.height(8.dp))
                         OutlinedButton(
-                            onClick = { viewModel.installApk() },
+                            onClick = { viewModel.installApk(context) },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Icon(Icons.Default.InstallMobile, contentDescription = null)

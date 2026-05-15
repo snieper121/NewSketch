@@ -88,6 +88,10 @@ class AppContainer(context: Context) {
         ToolchainDownloader(appContext)
     }
 
+    val apkInstaller: my.company.ai.build.ApkInstaller by lazy {
+        my.company.ai.build.ApkInstaller(appContext)
+    }
+
     val buildPipeline: BuildPipeline by lazy {
         BuildPipeline(
             phases = listOf(

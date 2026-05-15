@@ -151,11 +151,25 @@ class BuildViewModel(
     }
 
     /**
-     * TODO: реализовать установку APK через PackageInstaller.
+     * Устанавливает собранный APK через PackageInstaller.
      */
-    fun installApk() {
+    fun installApk(context: android.content.Context) {
+        val apkPath = (_uiState.value.status as? BuildStatus.Success)?.apkFilePath ?: return
+        val apkFile = java.io.File(apkPath)
+        if (!apkFile.exists()) {
+            _uiState.update { it.copy(logs = it.logs + "APK файл не найден: $apkPath") }
+            return
+        }
+        val installer = my.company.ai.build.ApkInstaller(context)
+        val result = installer.install(apkFile)
         _uiState.update {
-            it.copy(logs = it.logs + "Установка APK (не реализовано в M0 stub)")
+            it.copy(
+                logs = it.logs + if (result.isSuccess) {
+                    "APK установка запущена"
+                } else {
+                    "Ошибка установки: ${result.exceptionOrNull()?.message}"
+                },
+            )
         }
     }
 
