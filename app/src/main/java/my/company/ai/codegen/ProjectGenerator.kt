@@ -10,8 +10,9 @@ import java.io.File
 class ProjectGenerator(
     private val generators: List<CodeGenerator> = listOf(
         ManifestGenerator(),
-        MainActivityGenerator(),
         ThemeGenerator(),
+        MainActivityGenerator(),
+        ScreenGenerator(),
     )
 ) {
     /**
