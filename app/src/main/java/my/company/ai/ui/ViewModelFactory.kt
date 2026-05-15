@@ -14,6 +14,7 @@ import my.company.ai.ui.screens.projects.ProjectsViewModel
 import my.company.ai.ui.screens.resources.ResourceManagerViewModel
 import my.company.ai.ui.screens.screens.ScreenManagerViewModel
 import my.company.ai.ui.screens.settings.SettingsViewModel
+import my.company.ai.ui.screens.statelogic.StateLogicViewModel
 
 /**
  * Централизованная фабрика ViewModel'ей.
@@ -58,6 +59,12 @@ val ViewModelFactory: ViewModelProvider.Factory = viewModelFactory {
     }
     initializer {
         ResourceManagerViewModel(
+            savedStateHandle = createSavedStateHandle(),
+            projectRepository = container().projectRepository,
+        )
+    }
+    initializer {
+        StateLogicViewModel(
             savedStateHandle = createSavedStateHandle(),
             projectRepository = container().projectRepository,
         )

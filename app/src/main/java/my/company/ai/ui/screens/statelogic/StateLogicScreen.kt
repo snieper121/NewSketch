@@ -1,148 +1,178 @@
 package my.company.ai.ui.screens.statelogic
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
-data class StateVar(val name: String, val type: String, val initial: String)
-data class EventDef(val name: String, val description: String)
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import my.company.ai.ui.ViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StateLogicScreen(projectId: String, onBack: () -> Unit) {
-    var selectedTab by remember { mutableIntStateOf(0) }
+fun StateLogicScreen(
+    projectId: String,
+    onBack: () -> Unit,
+    viewModel: StateLogicViewModel = viewModel(factory = ViewModelFactory),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val tabs = listOf("Переменные", "События")
-    var showAdd by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Состояние / Логика") },
+                title = { Text("Состояние и логика") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Назад")
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showAdd = true }) {
+                    IconButton(onClick = {
+                        when (state.selectedTab) {
+                            0 -> viewModel.showAddVariableDialog()
+                            1 -> viewModel.showAddEventDialog()
+                        }
+                    }) {
                         Icon(Icons.Default.Add, "Добавить")
                     }
                 },
             )
         },
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
-            TabRow(selectedTabIndex = selectedTab) {
-                tabs.forEachIndexed { i, t ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+        ) {
+            TabRow(selectedTabIndex = state.selectedTab) {
+                tabs.forEachIndexed { index, title ->
                     Tab(
-                        selected = selectedTab == i,
-                        onClick = { selectedTab = i },
-                        text = { Text(t) },
+                        selected = state.selectedTab == index,
+                        onClick = { viewModel.selectTab(index) },
+                        text = { Text(title) },
                     )
                 }
             }
-            when (selectedTab) {
-                0 -> VariablesTab(showAdd, { showAdd = false })
-                1 -> EventsTab(showAdd, { showAdd = false })
+
+            when {
+                state.isLoading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                    )
+                }
+                else -> {
+                    when (state.selectedTab) {
+                        0 -> VariablesTab(
+                            variables = state.variables,
+                            onRemove = viewModel::removeVariable,
+                        )
+                        1 -> EventsTab(
+                            events = state.events,
+                            onRemove = viewModel::removeEvent,
+                        )
+                    }
+                }
             }
         }
     }
-}
 
-@Composable
-private fun VariablesTab(showAdd: Boolean, onDismiss: () -> Unit) {
-    val vars = remember {
-        mutableStateListOf(
-            StateVar("counter", "Int", "0"),
-            StateVar("userName", "String", "\"\""),
-            StateVar("isLoggedIn", "Boolean", "false"),
-        )
-    }
-    if (showAdd) {
+    // Диалог добавления переменной
+    if (state.showAddVariableDialog) {
         AddVariableDialog(
-            onDismiss = onDismiss,
-            onConfirm = { name, type, initial ->
-                if (name.isNotBlank() && type.isNotBlank()) {
-                    vars += StateVar(name, type, initial)
-                }
-            },
+            name = state.newVarName,
+            type = state.newVarType,
+            initialValue = state.newVarInitial,
+            onNameChange = viewModel::updateNewVarName,
+            onTypeChange = viewModel::updateNewVarType,
+            onInitialChange = viewModel::updateNewVarInitial,
+            onDismiss = viewModel::hideAddVariableDialog,
+            onConfirm = viewModel::addVariable,
         )
     }
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        items(vars) { v ->
-            Card(Modifier.fillMaxWidth()) {
-                Row(
-                    Modifier.fillMaxWidth().padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(v.name, style = MaterialTheme.typography.titleSmall)
-                        Text(
-                            "${v.type} = ${v.initial}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    IconButton(onClick = { vars.remove(v) }) {
-                        Icon(Icons.Default.Delete, "Удалить", tint = MaterialTheme.colorScheme.error)
-                    }
-                }
-            }
-        }
-    }
-}
 
-@Composable
-private fun EventsTab(showAdd: Boolean, onDismiss: () -> Unit) {
-    val events = remember {
-        mutableStateListOf(
-            EventDef("onIncrement", "counter++"),
-            EventDef("onLogin", "navigate(\"Home\")"),
-        )
-    }
-    if (showAdd) {
+    // Диалог добавления события
+    if (state.showAddEventDialog) {
         AddEventDialog(
-            onDismiss = onDismiss,
-            onConfirm = { name, desc ->
-                if (name.isNotBlank()) {
-                    events += EventDef(name, desc)
-                }
-            },
+            name = state.newEventName,
+            description = state.newEventDescription,
+            onNameChange = viewModel::updateNewEventName,
+            onDescriptionChange = viewModel::updateNewEventDescription,
+            onDismiss = viewModel::hideAddEventDialog,
+            onConfirm = viewModel::addEvent,
         )
     }
+}
+
+@Composable
+private fun VariablesTab(
+    variables: List<StateVariable>,
+    onRemove: (String) -> Unit,
+) {
     LazyColumn(
-        Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        items(events) { e ->
+        items(variables, key = { it.name }) { variable ->
             Card(Modifier.fillMaxWidth()) {
                 Row(
-                    Modifier.fillMaxWidth().padding(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text(e.name, style = MaterialTheme.typography.titleSmall)
-                        Text(
-                            e.description,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        Text(variable.name, style = MaterialTheme.typography.titleSmall)
+                        Row {
+                            Text(
+                                variable.type,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                "= ${variable.initialValue}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
-                    IconButton(onClick = { events.remove(e) }) {
+                    IconButton(onClick = { onRemove(variable.name) }) {
                         Icon(Icons.Default.Delete, "Удалить", tint = MaterialTheme.colorScheme.error)
                     }
                 }
@@ -152,39 +182,88 @@ private fun EventsTab(showAdd: Boolean, onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun AddVariableDialog(onDismiss: () -> Unit, onConfirm: (String, String, String) -> Unit) {
-    var name by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf("String") }
-    var initial by remember { mutableStateOf("") }
+private fun EventsTab(
+    events: List<EventDefinition>,
+    onRemove: (String) -> Unit,
+) {
+    LazyColumn(
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(events, key = { it.name }) { event ->
+            Card(Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(event.name, style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            event.description,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    IconButton(onClick = { onRemove(event.name) }) {
+                        Icon(Icons.Default.Delete, "Удалить", tint = MaterialTheme.colorScheme.error)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddVariableDialog(
+    name: String,
+    type: String,
+    initialValue: String,
+    onNameChange: (String) -> Unit,
+    onTypeChange: (String) -> Unit,
+    onInitialChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
     val types = listOf("String", "Int", "Boolean", "Float", "List")
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Новая переменная") },
+        title = { Text("Добавить переменную") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(name, { name = it }, label = { Text("Имя") }, singleLine = true)
-                SingleChoiceSegmentedButtonRow {
-                    types.forEach { t ->
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = onNameChange,
+                    label = { Text("Имя переменной") },
+                    singleLine = true,
+                )
+
+                Text("Тип:", style = MaterialTheme.typography.labelMedium)
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    types.forEachIndexed { index, t ->
                         SegmentedButton(
+                            shape = SegmentedButtonDefaults.itemShape(index, types.size),
+                            onClick = { onTypeChange(t) },
                             selected = type == t,
-                            onClick = { type = t },
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = types.indexOf(t),
-                                count = types.size,
-                            ),
                         ) {
                             Text(t)
                         }
                     }
                 }
-                OutlinedTextField(initial, { initial = it }, label = { Text("Начальное значение") }, singleLine = true)
+
+                OutlinedTextField(
+                    value = initialValue,
+                    onValueChange = onInitialChange,
+                    label = { Text("Начальное значение") },
+                    singleLine = true,
+                )
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(name.trim(), type, initial); onDismiss() }) {
-                Text("Добавить")
-            }
+            TextButton(onClick = onConfirm) { Text("Добавить") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Отмена") }
@@ -193,23 +272,35 @@ private fun AddVariableDialog(onDismiss: () -> Unit, onConfirm: (String, String,
 }
 
 @Composable
-private fun AddEventDialog(onDismiss: () -> Unit, onConfirm: (String, String) -> Unit) {
-    var name by remember { mutableStateOf("") }
-    var desc by remember { mutableStateOf("") }
-
+private fun AddEventDialog(
+    name: String,
+    description: String,
+    onNameChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Новое событие") },
+        title = { Text("Добавить событие") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(name, { name = it }, label = { Text("Имя") }, singleLine = true)
-                OutlinedTextField(desc, { desc = it }, label = { Text("Действие / описание") }, singleLine = false, maxLines = 3)
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = onNameChange,
+                    label = { Text("Имя события") },
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = onDescriptionChange,
+                    label = { Text("Описание") },
+                    singleLine = true,
+                )
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(name.trim(), desc.trim()); onDismiss() }) {
-                Text("Добавить")
-            }
+            TextButton(onClick = onConfirm) { Text("Добавить") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Отмена") }
