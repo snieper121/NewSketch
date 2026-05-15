@@ -141,4 +141,14 @@ class EditorViewModel(
             st.copy(widgetTypes = next)
         }
     }
+
+    /**
+     * Вставляет символ в текущую позицию курсора в редакторе.
+     * M0: просто добавляет в конец содержимого.
+     */
+    fun insertTextAtCursor(text: String) {
+        _uiState.update { st ->
+            st.copy(editorContent = st.editorContent + text)
+        }
+    }
 }

@@ -1,14 +1,17 @@
 package my.company.ai.ui.screens.editor
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 
@@ -29,8 +32,7 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -207,38 +209,16 @@ fun EditorScreen(
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
-                NavigationBar {
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Outlined.AutoAwesome, contentDescription = null) },
-                        label = { Text("AI") },
-                        selected = false,
-                        onClick = onOpenChat,
-                    )
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Outlined.AccountTree, contentDescription = null) },
-                        label = { Text("Экраны") },
-                        selected = false,
-                        onClick = onOpenScreens,
-                    )
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Outlined.DataObject, contentDescription = null) },
-                        label = { Text("Состояние") },
-                        selected = false,
-                        onClick = onOpenStateLogic,
-                    )
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Outlined.Image, contentDescription = null) },
-                        label = { Text("Ресурсы") },
-                        selected = false,
-                        onClick = onOpenResources,
-                    )
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Outlined.Build, contentDescription = null) },
-                        label = { Text("Сборка") },
-                        selected = false,
-                        onClick = onOpenBuild,
-                    )
-                }
+                EditorBottomToolbar(
+                    onOpenChat = onOpenChat,
+                    onOpenScreens = onOpenScreens,
+                    onOpenStateLogic = onOpenStateLogic,
+                    onOpenResources = onOpenResources,
+                    onOpenBuild = onOpenBuild,
+                    onInsertSymbol = { symbol ->
+                        viewModel.insertTextAtCursor(symbol)
+                    },
+                )
             },
         ) { padding ->
             Box(
@@ -305,4 +285,80 @@ private fun CodeEditor(
         textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
         maxLines = Int.MAX_VALUE,
     )
+}
+
+/**
+ * Нижняя панель редактора: кнопки навигации + символы для быстрой вставки.
+ */
+@Composable
+private fun EditorBottomToolbar(
+    onOpenChat: () -> Unit,
+    onOpenScreens: () -> Unit,
+    onOpenStateLogic: () -> Unit,
+    onOpenResources: () -> Unit,
+    onOpenBuild: () -> Unit,
+    onInsertSymbol: (String) -> Unit,
+) {
+    val symbols = listOf(
+        "/", "*", "\"", "'", ":", "!", "?", "@", "#",
+        "_", "-", "+", "(", ")", "[", "]", "\\", "{", "}", "%",
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 4.dp),
+    ) {
+        // Навигационные закладки
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            EditorNavChip(icon = { Icon(Icons.Outlined.AutoAwesome, null, Modifier.size(18.dp)) }, label = "AI", onClick = onOpenChat)
+            EditorNavChip(icon = { Icon(Icons.Outlined.AccountTree, null, Modifier.size(18.dp)) }, label = "Экраны", onClick = onOpenScreens)
+            EditorNavChip(icon = { Icon(Icons.Outlined.DataObject, null, Modifier.size(18.dp)) }, label = "Состояние", onClick = onOpenStateLogic)
+            EditorNavChip(icon = { Icon(Icons.Outlined.Image, null, Modifier.size(18.dp)) }, label = "Ресурсы", onClick = onOpenResources)
+            EditorNavChip(icon = { Icon(Icons.Outlined.Build, null, Modifier.size(18.dp)) }, label = "Сборка", onClick = onOpenBuild)
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        // Символы для быстрой вставки
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            symbols.forEach { symbol ->
+                TextButton(
+                    onClick = { onInsertSymbol(symbol) },
+                    modifier = Modifier.sizeIn(minWidth = 32.dp, minHeight = 32.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(2.dp),
+                ) {
+                    Text(
+                        symbol,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EditorNavChip(
+    icon: @Composable () -> Unit,
+    label: String,
+    onClick: () -> Unit,
+) {
+    TextButton(
+        onClick = onClick,
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+    ) {
+        icon()
+        Spacer(Modifier.width(4.dp))
+        Text(label, style = MaterialTheme.typography.labelSmall)
+    }
 }
