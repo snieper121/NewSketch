@@ -14,8 +14,7 @@ class ResourceCompilePhase(
 ) : BuildPhase {
     override val name: String = "Resource Compilation"
 
-    override suspend fun execute(context: BuildContext, isCancelled: () -> Boolean): PhaseResult {
-        if (isCancelled()) return PhaseResult.Failure("Отменено")
+    override suspend fun execute(context: BuildContext): PhaseResult {
         // TODO: aapt2 compile + aapt2 link
         return PhaseResult.Success
     }

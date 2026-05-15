@@ -40,14 +40,7 @@ class BuildPipeline(private val phases: List<BuildPhase>) {
             emitLog("[${index + 1}/$total] ${phase.name}...")
 
             val result = try {
-                phase.execute(context, isCancelled = {
-                    try {
-                        currentCoroutineContext().ensureActive()
-                        false
-                    } catch (_: CancellationException) {
-                        true
-                    }
-                })
+                phase.execute(context)
             } catch (e: CancellationException) {
                 emitLog("Сборка отменена.")
                 _result.emit(PhaseResult.Failure("Отменено пользователем"))

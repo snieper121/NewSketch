@@ -14,8 +14,7 @@ class PackagePhase(
 ) : BuildPhase {
     override val name: String = "Package & Sign"
 
-    override suspend fun execute(context: BuildContext, isCancelled: () -> Boolean): PhaseResult {
-        if (isCancelled()) return PhaseResult.Failure("Отменено")
+    override suspend fun execute(context: BuildContext): PhaseResult {
         // TODO: zip resources + dex → unsigned.apk → zipalign → sign
         return PhaseResult.Success
     }

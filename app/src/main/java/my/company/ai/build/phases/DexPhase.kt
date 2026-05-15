@@ -14,8 +14,7 @@ class DexPhase(
 ) : BuildPhase {
     override val name: String = "Dex"
 
-    override suspend fun execute(context: BuildContext, isCancelled: () -> Boolean): PhaseResult {
-        if (isCancelled()) return PhaseResult.Failure("Отменено")
+    override suspend fun execute(context: BuildContext): PhaseResult {
         // TODO: d8 classes.jar → classes.dex
         return PhaseResult.Success
     }

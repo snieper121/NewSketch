@@ -11,8 +11,7 @@ import my.company.ai.build.model.SampleProject
 class CodeGenPhase : BuildPhase {
     override val name: String = "Code Generation"
 
-    override suspend fun execute(context: BuildContext, isCancelled: () -> Boolean): PhaseResult {
-        if (isCancelled()) return PhaseResult.Failure("Отменено")
+    override suspend fun execute(context: BuildContext): PhaseResult {
 
         return try {
             SampleProject.writeTo(context.projectDir)

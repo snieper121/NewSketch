@@ -15,8 +15,7 @@ class KotlinCompilePhase(
 ) : BuildPhase {
     override val name: String = "Kotlin Compilation"
 
-    override suspend fun execute(context: BuildContext, isCancelled: () -> Boolean): PhaseResult {
-        if (isCancelled()) return PhaseResult.Failure("Отменено")
+    override suspend fun execute(context: BuildContext): PhaseResult {
 
         if (!toolchain.isToolchainReady()) {
             // M0: нет реального kotlinc — имитируем успех для проверки pipeline

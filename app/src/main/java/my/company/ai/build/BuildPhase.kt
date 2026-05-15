@@ -5,12 +5,11 @@ import my.company.ai.build.model.PhaseResult
 
 /**
  * Единая фаза сборки. Все фазы реализуют этот интерфейс.
+ *
+ * Cancellation поддерживается естественно через механизм корутин —
+ * если корутина отменена, [execute] выбросит [CancellationException].
  */
 interface BuildPhase {
     val name: String
-
-    /**
-     * Выполнить фазу. Может быть отменено через [isCancelled].
-     */
-    suspend fun execute(context: BuildContext, isCancelled: () -> Boolean): PhaseResult
+    suspend fun execute(context: BuildContext): PhaseResult
 }
