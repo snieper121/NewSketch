@@ -1,10 +1,12 @@
 package my.company.ai.ui.screens.editor
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,7 +27,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -55,7 +56,7 @@ fun DesignCanvas(
     }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+        contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         itemsIndexed(widgets, key = { idx, _ -> idx }) { idx, widget ->
@@ -100,19 +101,25 @@ private fun WidgetPreview(
     onClick: () -> Unit,
     onRemove: () -> Unit,
 ) {
-    val borderStroke = if (isSelected) {
-        BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+    val shape = RoundedCornerShape(8.dp)
+    val cardModifier = if (isSelected) {
+        Modifier
+            .fillMaxWidth()
+            .border(
+                BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+                shape,
+            )
+            .clickable { onClick() }
     } else {
-        null
+        Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
     }
 
-    OutlinedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(8.dp),
-        border = borderStroke,
-        colors = CardDefaults.outlinedCardColors(
+    Card(
+        modifier = cardModifier,
+        shape = shape,
+        colors = CardDefaults.cardColors(
             containerColor = if (isSelected)
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
             else
@@ -133,7 +140,6 @@ private fun WidgetPreview(
                         MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
-                // Показываем ключевые свойства
                 if (widget.properties.containsKey("text")) {
                     Text(
                         "\"${widget.properties["text"]}\"",
