@@ -30,7 +30,7 @@ object SchemaValidator {
         val errors = mutableListOf<ValidationError>()
 
         // Package name
-        if (!project.packageName.matches(Regex("^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+\$"))) {
+        if (!project.packageName.matches(Regex("""^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$"""))) {
             errors += ValidationError.InvalidPackageName(
                 "packageName '${project.packageName}' не соответствует формату Java package"
             )
