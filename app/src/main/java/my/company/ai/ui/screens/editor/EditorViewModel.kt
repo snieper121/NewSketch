@@ -13,6 +13,7 @@ import my.company.ai.data.model.ProjectFile
 import my.company.ai.data.model.WidgetType
 import my.company.ai.data.repository.ProjectRepository
 
+enum class EditorTab { View, Logic, Component }
 enum class DrawerMode { Widgets, Files }
 
 /**
@@ -34,11 +35,19 @@ data class EditorUiState(
     val savedContent: String = "",
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
+    val activeTab: EditorTab = EditorTab.View,
     val drawerMode: DrawerMode = DrawerMode.Widgets,
     val widgets: List<WidgetItem> = emptyList(),
     val selectedWidgetIndex: Int? = null,
     val showPropertyEditor: Boolean = false,
     val pendingOpenFile: String? = null,
+    // Logic tab data
+    val events: List<EditorEvent> = emptyList(),
+    val variables: List<EditorVariable> = emptyList(),
+    // Component tab data
+    val endpoints: List<ApiEndpoint> = emptyList(),
+    val tables: List<DbTable> = emptyList(),
+    val prefs: List<SharedPref> = emptyList(),
 ) {
     val hasUnsavedChanges: Boolean get() = openedFile != null && editorContent != savedContent
     val selectedWidget: WidgetItem? get() = selectedWidgetIndex?.let { widgets.getOrNull(it) }
@@ -70,6 +79,12 @@ class EditorViewModel(
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
             }
         }
+    }
+
+    // === Tab Management ===
+
+    fun setActiveTab(tab: EditorTab) {
+        _uiState.update { it.copy(activeTab = tab) }
     }
 
     fun setDrawerMode(mode: DrawerMode) {
@@ -142,12 +157,8 @@ class EditorViewModel(
 
     // === Widget Management ===
 
-    /**
-     * Добавляет виджет в список с дефолтными свойствами.
-     */
     fun addWidget(type: WidgetType) {
         val properties = mutableMapOf<String, String>()
-        // Дефолтные свойства в зависимости от типа
         when (type) {
             WidgetType.Text -> properties["text"] = "Текст"
             WidgetType.Button -> properties["text"] = "Кнопка"
@@ -156,7 +167,7 @@ class EditorViewModel(
                 properties["value"] = ""
             }
             WidgetType.Checkbox -> properties["text"] = "Чекбокс"
-            else -> {} // Остальные без дефолтных свойств
+            else -> {}
         }
         val widget = WidgetItem(type = type, properties = properties)
         _uiState.update { it.copy(widgets = it.widgets + widget) }
@@ -173,33 +184,14 @@ class EditorViewModel(
         }
     }
 
-    /**
-     * Выбирает виджет на canvas и открывает PropertyEditorSheet.
-     */
     fun selectWidget(index: Int) {
-        _uiState.update {
-            it.copy(
-                selectedWidgetIndex = index,
-                showPropertyEditor = true,
-            )
-        }
+        _uiState.update { it.copy(selectedWidgetIndex = index, showPropertyEditor = true) }
     }
 
-    /**
-     * Снимает выделение и закрывает PropertyEditorSheet.
-     */
     fun deselectWidget() {
-        _uiState.update {
-            it.copy(
-                selectedWidgetIndex = null,
-                showPropertyEditor = false,
-            )
-        }
+        _uiState.update { it.copy(selectedWidgetIndex = null, showPropertyEditor = false) }
     }
 
-    /**
-     * Обновляет свойство выбранного виджета.
-     */
     fun updateWidgetProperty(key: String, value: String) {
         val index = _uiState.value.selectedWidgetIndex ?: return
         _uiState.update { st ->
@@ -210,9 +202,6 @@ class EditorViewModel(
         }
     }
 
-    /**
-     * Обновляет модификатор выбранного виджета.
-     */
     fun updateWidgetModifier(key: String, value: String) {
         val index = _uiState.value.selectedWidgetIndex ?: return
         _uiState.update { st ->
@@ -223,13 +212,55 @@ class EditorViewModel(
         }
     }
 
-    /**
-     * Вставляет символ в текущую позицию курсора в редакторе.
-     * M0: просто добавляет в конец содержимого.
-     */
     fun insertTextAtCursor(text: String) {
-        _uiState.update { st ->
-            st.copy(editorContent = st.editorContent + text)
-        }
+        _uiState.update { st -> st.copy(editorContent = st.editorContent + text) }
+    }
+
+    // === Logic Tab: Events ===
+
+    fun addEvent(event: EditorEvent) {
+        _uiState.update { st -> st.copy(events = st.events + event) }
+    }
+
+    fun removeEvent(name: String) {
+        _uiState.update { st -> st.copy(events = st.events.filter { it.name != name }) }
+    }
+
+    fun addVariable(variable: EditorVariable) {
+        _uiState.update { st -> st.copy(variables = st.variables + variable) }
+    }
+
+    fun removeVariable(name: String) {
+        _uiState.update { st -> st.copy(variables = st.variables.filter { it.name != name }) }
+    }
+
+    // === Component Tab: Endpoints ===
+
+    fun addEndpoint(endpoint: ApiEndpoint) {
+        _uiState.update { st -> st.copy(endpoints = st.endpoints + endpoint) }
+    }
+
+    fun removeEndpoint(endpoint: ApiEndpoint) {
+        _uiState.update { st -> st.copy(endpoints = st.endpoints - endpoint) }
+    }
+
+    // === Component Tab: Tables ===
+
+    fun addTable(table: DbTable) {
+        _uiState.update { st -> st.copy(tables = st.tables + table) }
+    }
+
+    fun removeTable(name: String) {
+        _uiState.update { st -> st.copy(tables = st.tables.filter { it.name != name }) }
+    }
+
+    // === Component Tab: Preferences ===
+
+    fun addPref(pref: SharedPref) {
+        _uiState.update { st -> st.copy(prefs = st.prefs + pref) }
+    }
+
+    fun removePref(key: String) {
+        _uiState.update { st -> st.copy(prefs = st.prefs.filter { it.key != key }) }
     }
 }

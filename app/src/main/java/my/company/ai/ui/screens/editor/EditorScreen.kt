@@ -3,6 +3,7 @@ package my.company.ai.ui.screens.editor
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
-
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Menu
@@ -35,12 +35,13 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
-
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -56,6 +57,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -81,7 +83,6 @@ fun EditorScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Показ ошибок через Snackbar.
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -99,34 +100,25 @@ fun EditorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceEvenly,
+                    horizontalArrangement = Arrangement.SpaceEvenly,
                 ) {
-                    IconButton(
-                        onClick = { viewModel.setDrawerMode(DrawerMode.Files) },
-                    ) {
+                    IconButton(onClick = { viewModel.setDrawerMode(DrawerMode.Files) }) {
                         Icon(
-                            Icons.Default.Folder,
-                            contentDescription = "Файлы",
-                            tint = if (state.drawerMode == DrawerMode.Files)
-                                MaterialTheme.colorScheme.primary
+                            Icons.Default.Folder, "Файлы",
+                            tint = if (state.drawerMode == DrawerMode.Files) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    IconButton(
-                        onClick = { viewModel.setDrawerMode(DrawerMode.Widgets) },
-                    ) {
+                    IconButton(onClick = { viewModel.setDrawerMode(DrawerMode.Widgets) }) {
                         Icon(
-                            Icons.Default.Widgets,
-                            contentDescription = "Виджеты",
-                            tint = if (state.drawerMode == DrawerMode.Widgets)
-                                MaterialTheme.colorScheme.primary
+                            Icons.Default.Widgets, "Виджеты",
+                            tint = if (state.drawerMode == DrawerMode.Widgets) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 Spacer(Modifier.height(8.dp))
-
                 // Навигационные кнопки
                 Row(
                     modifier = Modifier
@@ -135,40 +127,27 @@ fun EditorScreen(
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    IconButton(
-                        onClick = { scope.launch { drawerState.close() }; onOpenChat() },
-                    ) {
-                        Icon(Icons.Outlined.AutoAwesome, contentDescription = "AI")
+                    IconButton(onClick = { scope.launch { drawerState.close() }; onOpenChat() }) {
+                        Icon(Icons.Outlined.AutoAwesome, "AI")
                     }
-                    IconButton(
-                        onClick = { scope.launch { drawerState.close() }; onOpenScreens() },
-                    ) {
-                        Icon(Icons.Outlined.AccountTree, contentDescription = "Экраны")
+                    IconButton(onClick = { scope.launch { drawerState.close() }; onOpenScreens() }) {
+                        Icon(Icons.Outlined.AccountTree, "Экраны")
                     }
-                    IconButton(
-                        onClick = { scope.launch { drawerState.close() }; onOpenStateLogic() },
-                    ) {
-                        Icon(Icons.Outlined.DataObject, contentDescription = "Состояние")
+                    IconButton(onClick = { scope.launch { drawerState.close() }; onOpenStateLogic() }) {
+                        Icon(Icons.Outlined.DataObject, "Состояние")
                     }
-                    IconButton(
-                        onClick = { scope.launch { drawerState.close() }; onOpenResources() },
-                    ) {
-                        Icon(Icons.Outlined.Image, contentDescription = "Ресурсы")
+                    IconButton(onClick = { scope.launch { drawerState.close() }; onOpenResources() }) {
+                        Icon(Icons.Outlined.Image, "Ресурсы")
                     }
-                    IconButton(
-                        onClick = { scope.launch { drawerState.close() }; onOpenBuild() },
-                    ) {
-                        Icon(Icons.Outlined.Build, contentDescription = "Сборка")
+                    IconButton(onClick = { scope.launch { drawerState.close() }; onOpenBuild() }) {
+                        Icon(Icons.Outlined.Build, "Сборка")
                     }
-                    IconButton(
-                        onClick = { scope.launch { drawerState.close() }; onOpenProjectSettings() },
-                    ) {
-                        Icon(Icons.Outlined.Settings, contentDescription = "Настройки")
+                    IconButton(onClick = { scope.launch { drawerState.close() }; onOpenProjectSettings() }) {
+                        Icon(Icons.Outlined.Settings, "Настройки")
                     }
                 }
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 Spacer(Modifier.height(8.dp))
-
                 when (state.drawerMode) {
                     DrawerMode.Files -> {
                         val tree = state.tree
@@ -185,12 +164,7 @@ fun EditorScreen(
                                 modifier = Modifier.fillMaxSize(),
                             )
                         } else {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text("Нет файлов")
-                            }
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Нет файлов") }
                         }
                     }
                     DrawerMode.Widgets -> {
@@ -210,56 +184,64 @@ fun EditorScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = {
-                        Text(
-                            state.project?.name ?: "Редактор",
-                            maxLines = 1,
-                        )
-                    },
+                    title = { Text(state.project?.name ?: "Редактор", maxLines = 1) },
                     navigationIcon = {
-                        IconButton(
-                            onClick = {
-                                scope.launch { drawerState.open() }
-                            },
-                        ) {
-                            Icon(Icons.Default.Menu, contentDescription = "Меню")
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, "Меню")
                         }
                     },
                     actions = {
                         if (state.openedFile != null && state.hasUnsavedChanges) {
                             IconButton(onClick = viewModel::saveCurrentFile) {
-                                Icon(Icons.Default.Save, contentDescription = "Сохранить")
+                                Icon(Icons.Default.Save, "Сохранить")
                             }
                         }
                         if (state.openedFile != null) {
                             IconButton(onClick = viewModel::closeFile) {
-                                Icon(Icons.Default.Close, contentDescription = "Закрыть файл")
+                                Icon(Icons.Default.Close, "Закрыть файл")
                             }
                         }
                         IconButton(onClick = onOpenChat) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.Chat,
-                                contentDescription = "AI-чат",
-                            )
+                            Icon(Icons.AutoMirrored.Filled.Chat, "AI-чат")
                         }
                     },
                 )
             },
             floatingActionButton = {
-                if (state.openedFile != null && state.hasUnsavedChanges) {
+                if (state.activeTab == EditorTab.View && state.openedFile != null && state.hasUnsavedChanges) {
                     FloatingActionButton(onClick = viewModel::saveCurrentFile) {
-                        Icon(Icons.Default.Save, contentDescription = "Сохранить")
+                        Icon(Icons.Default.Save, "Сохранить")
                     }
                 }
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
-                if (state.openedFile != null) {
-                    EditorSymbolBar(
-                        onInsertSymbol = { symbol ->
-                            viewModel.insertTextAtCursor(symbol)
-                        },
-                    )
+                Column {
+                    // Symbol bar для код-редактора
+                    if (state.activeTab == EditorTab.View && state.openedFile != null) {
+                        EditorSymbolBar(onInsertSymbol = viewModel::insertTextAtCursor)
+                    }
+                    // Bottom tabs
+                    NavigationBar {
+                        EditorTabItem(
+                            label = "View",
+                            icon = Icons.Default.Widgets,
+                            selected = state.activeTab == EditorTab.View,
+                            onClick = { viewModel.setActiveTab(EditorTab.View) },
+                        )
+                        EditorTabItem(
+                            label = "Logic",
+                            icon = Icons.Outlined.DataObject,
+                            selected = state.activeTab == EditorTab.Logic,
+                            onClick = { viewModel.setActiveTab(EditorTab.Logic) },
+                        )
+                        EditorTabItem(
+                            label = "Component",
+                            icon = Icons.Outlined.Build,
+                            selected = state.activeTab == EditorTab.Component,
+                            onClick = { viewModel.setActiveTab(EditorTab.Component) },
+                        )
+                    }
                 }
             },
         ) { padding ->
@@ -270,63 +252,103 @@ fun EditorScreen(
             ) {
                 when {
                     state.isLoading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                    state.project == null -> Text(
-                        "Проект не найден",
-                        modifier = Modifier.align(Alignment.Center),
-                    )
-                    state.openedFile != null -> CodeEditor(
-                        content = state.editorContent,
-                        onContentChange = viewModel::onContentChanged,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                    else -> DesignCanvas(
-                        widgets = state.widgets,
-                        selectedIndex = state.selectedWidgetIndex,
-                        onSelect = viewModel::selectWidget,
-                        onRemoveAt = viewModel::removeWidgetAt,
-                        modifier = Modifier.fillMaxSize(),
-                    )
+                    state.project == null -> Text("Проект не найден", Modifier.align(Alignment.Center))
+                    else -> {
+                        when (state.activeTab) {
+                            EditorTab.View -> ViewTabContent(state, viewModel)
+                            EditorTab.Logic -> LogicTabContent(state, viewModel)
+                            EditorTab.Component -> ComponentTabContent(state, viewModel)
+                        }
+                    }
                 }
             }
         }
     }
 
-    // PropertyEditorSheet — показывается при выборе виджета.
+    // PropertyEditorSheet
     if (state.showPropertyEditor && state.selectedWidget != null) {
         val widget = state.selectedWidget!!
         PropertyEditorSheet(
             widgetType = widget.type.displayName,
             properties = widget.properties,
-            onPropertyChange = { key, value ->
-                viewModel.updateWidgetProperty(key, value)
-            },
+            onPropertyChange = viewModel::updateWidgetProperty,
             onDismiss = viewModel::deselectWidget,
         )
     }
 
-    // Диалог подтверждения потери несохранённых изменений.
+    // Диалог потери изменений
     if (state.pendingOpenFile != null) {
         AlertDialog(
             onDismissRequest = viewModel::cancelPendingOpen,
             title = { Text("Несохранённые изменения") },
-            text = {
-                Text(
-                    "В текущем файле есть несохранённые изменения. " +
-                        "Перейти к другому файлу без сохранения?",
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = viewModel::confirmDiscardAndOpen) {
-                    Text("Не сохранять")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = viewModel::cancelPendingOpen) {
-                    Text("Отмена")
-                }
-            },
+            text = { Text("В текущем файле есть несохранённые изменения. Перейти к другому файлу без сохранения?") },
+            confirmButton = { TextButton(onClick = viewModel::confirmDiscardAndOpen) { Text("Не сохранять") } },
+            dismissButton = { TextButton(onClick = viewModel::cancelPendingOpen) { Text("Отмена") } },
         )
     }
+}
+
+@Composable
+private fun ViewTabContent(state: EditorUiState, viewModel: EditorViewModel) {
+    if (state.openedFile != null) {
+        CodeEditor(
+            content = state.editorContent,
+            onContentChange = viewModel::onContentChanged,
+            modifier = Modifier.fillMaxSize(),
+        )
+    } else {
+        DesignCanvas(
+            widgets = state.widgets,
+            selectedIndex = state.selectedWidgetIndex,
+            onSelect = viewModel::selectWidget,
+            onRemoveAt = viewModel::removeWidgetAt,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}
+
+@Composable
+private fun LogicTabContent(state: EditorUiState, viewModel: EditorViewModel) {
+    EventEditorPanel(
+        events = state.events,
+        variables = state.variables,
+        onAddEvent = viewModel::addEvent,
+        onRemoveEvent = viewModel::removeEvent,
+        onAddVariable = viewModel::addVariable,
+        onRemoveVariable = viewModel::removeVariable,
+        modifier = Modifier.fillMaxSize(),
+    )
+}
+
+@Composable
+private fun ComponentTabContent(state: EditorUiState, viewModel: EditorViewModel) {
+    ComponentManagerPanel(
+        endpoints = state.endpoints,
+        tables = state.tables,
+        prefs = state.prefs,
+        onAddEndpoint = viewModel::addEndpoint,
+        onRemoveEndpoint = viewModel::removeEndpoint,
+        onAddTable = viewModel::addTable,
+        onRemoveTable = viewModel::removeTable,
+        onAddPref = viewModel::addPref,
+        onRemovePref = viewModel::removePref,
+        modifier = Modifier.fillMaxSize(),
+    )
+}
+
+@Composable
+private fun EditorTabItem(
+    label: String,
+    icon: ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    NavigationBarItem(
+        selected = selected,
+        onClick = onClick,
+        icon = { Icon(icon, contentDescription = label) },
+        label = { Text(label) },
+    )
 }
 
 @Composable
@@ -344,19 +366,10 @@ private fun CodeEditor(
     )
 }
 
-/**
- * Панель символов редактора — отображается над экранной клавиатурой.
- */
 @Composable
-private fun EditorSymbolBar(
-    onInsertSymbol: (String) -> Unit,
-) {
-    val symbols = listOf(
-        "/", "*", "\"", "'", ":", "!", "?", "@", "#",
-        "_", "-", "+", "(", ")", "[", "]", "\\", "{", "}", "%",
-    )
-
-    androidx.compose.foundation.layout.Box(
+private fun EditorSymbolBar(onInsertSymbol: (String) -> Unit) {
+    val symbols = listOf("/", "*", "\"", "'", ":", "!", "?", "@", "#", "_", "-", "+", "(", ")", "[", "]", "\\", "{", "}", "%")
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .imePadding()
@@ -372,13 +385,9 @@ private fun EditorSymbolBar(
                 TextButton(
                     onClick = { onInsertSymbol(symbol) },
                     modifier = Modifier.sizeIn(minWidth = 32.dp, minHeight = 32.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(2.dp),
+                    contentPadding = PaddingValues(2.dp),
                 ) {
-                    Text(
-                        symbol,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontFamily = FontFamily.Monospace,
-                    )
+                    Text(symbol, style = MaterialTheme.typography.bodyMedium, fontFamily = FontFamily.Monospace)
                 }
             }
         }
