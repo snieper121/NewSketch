@@ -68,9 +68,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import my.company.ai.ui.ViewModelFactory
 
-/**
- * Режим содержимого drawer.
- */
 enum class DrawerPanel { Files, Widgets, Navigation }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,14 +100,13 @@ fun EditorScreen(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet(modifier = Modifier.width(280.dp)) {
-                // === Верхняя панель: 3 кнопки переключения ===
+                // === 3 кнопки вверху ===
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                 ) {
-                    // Кнопка 1: Дерево файлов
                     IconButton(onClick = { drawerPanel.value = DrawerPanel.Files }) {
                         Icon(
                             Icons.Default.Folder, "Файлы",
@@ -118,7 +114,6 @@ fun EditorScreen(
                             else MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    // Кнопка 2: Палитра виджетов
                     IconButton(onClick = { drawerPanel.value = DrawerPanel.Widgets }) {
                         Icon(
                             Icons.Default.Widgets, "Виджеты",
@@ -126,7 +121,6 @@ fun EditorScreen(
                             else MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    // Кнопка 3: Навигация
                     IconButton(onClick = { drawerPanel.value = DrawerPanel.Navigation }) {
                         Icon(
                             Icons.Outlined.Tune, "Навигация",
@@ -138,7 +132,6 @@ fun EditorScreen(
                 HorizontalDivider(Modifier.padding(horizontal = 12.dp))
                 Spacer(Modifier.height(4.dp))
 
-                // === Содержимое drawer ===
                 when (drawerPanel.value) {
                     DrawerPanel.Files -> DrawerFilesPanel(state, viewModel, drawerState)
                     DrawerPanel.Widgets -> DrawerWidgetsPanel(viewModel, drawerState)
@@ -194,8 +187,23 @@ fun EditorScreen(
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
-                if (state.openedFile != null) {
-                    EditorSymbolBar(onInsertSymbol = viewModel::insertTextAtCursor)
+                // Bottom bar зависит от контекста
+                when {
+                    // View tab + виджет выбран → Property Panel
+                    state.activeTab == EditorTab.View && state.selectedWidget != null -> {
+                        BottomPropertyPanel(
+                            widget = state.selectedWidget!!,
+                            onPropertyChange = viewModel::updateWidgetProperty,
+                            onModifierChange = viewModel::updateWidgetModifier,
+                            onClose = viewModel::deselectWidget,
+                        )
+                    }
+                    // View tab + открыт файл (код) → Symbol bar
+                    state.activeTab == EditorTab.View && state.openedFile != null -> {
+                        EditorSymbolBar(onInsertSymbol = viewModel::insertTextAtCursor)
+                    }
+                    // Logic/Component tab → ничего
+                    else -> {}
                 }
             },
         ) { padding ->
@@ -254,17 +262,6 @@ fun EditorScreen(
         }
     }
 
-    // PropertyEditorSheet
-    if (state.showPropertyEditor && state.selectedWidget != null) {
-        val widget = state.selectedWidget!!
-        PropertyEditorSheet(
-            widgetType = widget.type.displayName,
-            properties = widget.properties,
-            onPropertyChange = viewModel::updateWidgetProperty,
-            onDismiss = viewModel::deselectWidget,
-        )
-    }
-
     // Диалог потери изменений
     if (state.pendingOpenFile != null) {
         AlertDialog(
@@ -278,7 +275,7 @@ fun EditorScreen(
 }
 
 // ============================================================
-// Drawer: Панель файлов (кнопка 1)
+// Drawer panels
 // ============================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -309,10 +306,6 @@ private fun DrawerFilesPanel(
     }
 }
 
-// ============================================================
-// Drawer: Палитра виджетов (кнопка 2)
-// ============================================================
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DrawerWidgetsPanel(
@@ -328,10 +321,6 @@ private fun DrawerWidgetsPanel(
         modifier = Modifier.fillMaxSize(),
     )
 }
-
-// ============================================================
-// Drawer: Навигация (кнопка 3) — вертикальный список разделов
-// ============================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -356,14 +345,12 @@ private fun DrawerNavigationPanel(
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        // Табы редактора
         Text(
             "Редактор",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
-
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.Widgets, null) },
             label = { Text("View") },
@@ -394,80 +381,56 @@ private fun DrawerNavigationPanel(
 
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-        // Навигация по проекту
         Text(
             "Проект",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         )
-
         NavigationDrawerItem(
             icon = { Icon(Icons.Outlined.AccountTree, null) },
             label = { Text("Экраны") },
             selected = false,
-            onClick = {
-                scope.launch { drawerState.close() }
-                onOpenScreens()
-            },
+            onClick = { scope.launch { drawerState.close() }; onOpenScreens() },
         )
         NavigationDrawerItem(
             icon = { Icon(Icons.Outlined.DataObject, null) },
             label = { Text("Состояние и логика") },
             selected = false,
-            onClick = {
-                scope.launch { drawerState.close() }
-                onOpenStateLogic()
-            },
+            onClick = { scope.launch { drawerState.close() }; onOpenStateLogic() },
         )
         NavigationDrawerItem(
             icon = { Icon(Icons.Outlined.Image, null) },
             label = { Text("Ресурсы") },
             selected = false,
-            onClick = {
-                scope.launch { drawerState.close() }
-                onOpenResources()
-            },
+            onClick = { scope.launch { drawerState.close() }; onOpenResources() },
         )
         NavigationDrawerItem(
             icon = { Icon(Icons.Outlined.Settings, null) },
             label = { Text("Настройки проекта") },
             selected = false,
-            onClick = {
-                scope.launch { drawerState.close() }
-                onOpenProjectSettings()
-            },
+            onClick = { scope.launch { drawerState.close() }; onOpenProjectSettings() },
         )
 
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-        // Инструменты
         NavigationDrawerItem(
             icon = { Icon(Icons.Outlined.Build, null) },
             label = { Text("Сборка") },
             selected = false,
-            onClick = {
-                scope.launch { drawerState.close() }
-                onOpenBuild()
-            },
+            onClick = { scope.launch { drawerState.close() }; onOpenBuild() },
         )
         NavigationDrawerItem(
             icon = { Icon(Icons.Outlined.AutoAwesome, null) },
             label = { Text("AI-чат") },
             selected = false,
-            onClick = {
-                scope.launch { drawerState.close() }
-                onOpenChat()
-            },
+            onClick = { scope.launch { drawerState.close() }; onOpenChat() },
         )
         NavigationDrawerItem(
             icon = { Icon(Icons.AutoMirrored.Filled.Chat, null) },
             label = { Text("Закрыть проект") },
             selected = false,
-            onClick = {
-                scope.launch { drawerState.close() }
-                onBack()
-            },
+            onClick = { scope.launch { drawerState.close() }; onBack() },
         )
     }
 }
