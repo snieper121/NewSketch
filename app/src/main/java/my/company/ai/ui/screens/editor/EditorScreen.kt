@@ -33,6 +33,7 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -43,7 +44,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -51,11 +51,11 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.DrawerState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -90,7 +90,7 @@ fun EditorScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    var drawerPanel = remember { androidx.compose.runtime.mutableStateOf(DrawerPanel.Widgets) }
+    val drawerPanel = remember { mutableStateOf(DrawerPanel.Widgets) }
 
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
@@ -138,7 +138,7 @@ fun EditorScreen(
                 HorizontalDivider(Modifier.padding(horizontal = 12.dp))
                 Spacer(Modifier.height(4.dp))
 
-                // === Содержимое drawer в зависимости от выбранной кнопки ===
+                // === Содержимое drawer ===
                 when (drawerPanel.value) {
                     DrawerPanel.Files -> DrawerFilesPanel(state, viewModel, drawerState)
                     DrawerPanel.Widgets -> DrawerWidgetsPanel(viewModel, drawerState)
@@ -194,7 +194,6 @@ fun EditorScreen(
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
-                // Symbol bar только для код-редактора
                 if (state.openedFile != null) {
                     EditorSymbolBar(onInsertSymbol = viewModel::insertTextAtCursor)
                 }
@@ -208,18 +207,48 @@ fun EditorScreen(
                 when {
                     state.isLoading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                     state.project == null -> Text("Проект не найден", Modifier.align(Alignment.Center))
-                    state.openedFile != null -> CodeEditor(
-                        content = state.editorContent,
-                        onContentChange = viewModel::onContentChanged,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                    else -> DesignCanvas(
-                        widgets = state.widgets,
-                        selectedIndex = state.selectedWidgetIndex,
-                        onSelect = viewModel::selectWidget,
-                        onRemoveAt = viewModel::removeWidgetAt,
-                        modifier = Modifier.fillMaxSize(),
-                    )
+                    else -> {
+                        when (state.activeTab) {
+                            EditorTab.View -> {
+                                if (state.openedFile != null) {
+                                    CodeEditor(
+                                        content = state.editorContent,
+                                        onContentChange = viewModel::onContentChanged,
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                } else {
+                                    DesignCanvas(
+                                        widgets = state.widgets,
+                                        selectedIndex = state.selectedWidgetIndex,
+                                        onSelect = viewModel::selectWidget,
+                                        onRemoveAt = viewModel::removeWidgetAt,
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                }
+                            }
+                            EditorTab.Logic -> EventEditorPanel(
+                                events = state.events,
+                                variables = state.variables,
+                                onAddEvent = viewModel::addEvent,
+                                onRemoveEvent = viewModel::removeEvent,
+                                onAddVariable = viewModel::addVariable,
+                                onRemoveVariable = viewModel::removeVariable,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                            EditorTab.Component -> ComponentManagerPanel(
+                                endpoints = state.endpoints,
+                                tables = state.tables,
+                                prefs = state.prefs,
+                                onAddEndpoint = viewModel::addEndpoint,
+                                onRemoveEndpoint = viewModel::removeEndpoint,
+                                onAddTable = viewModel::addTable,
+                                onRemoveTable = viewModel::removeTable,
+                                onAddPref = viewModel::addPref,
+                                onRemovePref = viewModel::removePref,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -338,7 +367,7 @@ private fun DrawerNavigationPanel(
         NavigationDrawerItem(
             icon = { Icon(Icons.Default.Widgets, null) },
             label = { Text("View") },
-            selected = false,
+            selected = state.activeTab == EditorTab.View,
             onClick = {
                 scope.launch { drawerState.close() }
                 viewModel.setActiveTab(EditorTab.View)
@@ -347,7 +376,7 @@ private fun DrawerNavigationPanel(
         NavigationDrawerItem(
             icon = { Icon(Icons.Outlined.DataObject, null) },
             label = { Text("Logic") },
-            selected = false,
+            selected = state.activeTab == EditorTab.Logic,
             onClick = {
                 scope.launch { drawerState.close() }
                 viewModel.setActiveTab(EditorTab.Logic)
@@ -356,7 +385,7 @@ private fun DrawerNavigationPanel(
         NavigationDrawerItem(
             icon = { Icon(Icons.Outlined.Build, null) },
             label = { Text("Component") },
-            selected = false,
+            selected = state.activeTab == EditorTab.Component,
             onClick = {
                 scope.launch { drawerState.close() }
                 viewModel.setActiveTab(EditorTab.Component)
