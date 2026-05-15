@@ -136,9 +136,9 @@ class ScreenGenerator : CodeGenerator {
     private fun generateTextField(widget: WidgetJson): CodeBlock {
         val label = widget.properties["label"]?.toString()?.trim('"') ?: ""
         return CodeBlock.builder()
-            .addStatement("var text by %T { %T(%S) }",
+            .addStatement("var text by %T { %T { %S } }",
                 ClassName("androidx.compose.runtime", "remember"),
-                ClassName("androidx.compose.runtime.mutableStateOf"),
+                ClassName("androidx.compose.runtime", "mutableStateOf"),
                 "")
             .addStatement("%T(\n  value = text,\n  onValueChange = { text = it },\n  label = { %T(%S) }\n)",
                 ClassName("androidx.compose.material3", "TextField"),
