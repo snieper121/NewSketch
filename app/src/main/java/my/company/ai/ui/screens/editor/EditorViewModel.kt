@@ -24,6 +24,7 @@ data class WidgetItem(
     val type: WidgetType,
     val properties: MutableMap<String, String> = mutableMapOf(),
     val modifier: MutableMap<String, String> = mutableMapOf(),
+    val children: MutableList<WidgetItem> = mutableListOf(),
 )
 
 data class EditorUiState(

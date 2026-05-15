@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,9 +38,9 @@ import androidx.compose.ui.unit.dp
 import my.company.ai.data.model.WidgetType
 
 /**
- * Визуальный канвас: рендерит превью виджетов с поддержкой выбора.
+ * Визуальный канвас: рекурсивно рендерит дерево виджетов.
  *
- * Tap на виджет → выделение + открытие PropertyEditorSheet.
+ * Tap на виджет → выделение + BottomPropertyPanel.
  * Кнопка удаления → удаление виджета из списка.
  */
 @Composable
@@ -65,6 +66,7 @@ fun DesignCanvas(
                 isSelected = idx == selectedIndex,
                 onClick = { onSelect(idx) },
                 onRemove = { onRemoveAt(idx) },
+                depth = 0,
             )
         }
     }
@@ -86,7 +88,7 @@ private fun EmptyCanvas(modifier: Modifier) {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "Откройте меню (гамбургер слева) и выберите виджет",
+                "Откройте меню (☰) → 💠 и выберите виджет",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -94,26 +96,30 @@ private fun EmptyCanvas(modifier: Modifier) {
     }
 }
 
+/**
+ * Рекурсивный рендер виджета с поддержкой вложенности.
+ *
+ * @param depth уровень вложенности (0 = корень)
+ */
 @Composable
 private fun WidgetPreview(
     widget: WidgetItem,
     isSelected: Boolean,
     onClick: () -> Unit,
     onRemove: () -> Unit,
+    depth: Int,
 ) {
     val shape = RoundedCornerShape(8.dp)
+    val baseModifier = Modifier
+        .fillMaxWidth()
+        .padding(start = (depth * 16).dp) // Отступ для вложенности
+
     val cardModifier = if (isSelected) {
-        Modifier
-            .fillMaxWidth()
-            .border(
-                BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
-                shape,
-            )
+        baseModifier
+            .border(BorderStroke(2.dp, MaterialTheme.colorScheme.primary), shape)
             .clickable { onClick() }
     } else {
-        Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
+        baseModifier.clickable { onClick() }
     }
 
     Card(
@@ -127,6 +133,7 @@ private fun WidgetPreview(
         ),
     ) {
         Column(Modifier.padding(12.dp)) {
+            // Заголовок виджета
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -147,17 +154,27 @@ private fun WidgetPreview(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                IconButton(onClick = onRemove) {
-                    Icon(Icons.Default.Close, contentDescription = "Удалить")
+                IconButton(onClick = onRemove, modifier = Modifier.height(24.dp)) {
+                    Icon(Icons.Default.Close, "Удалить", modifier = Modifier.height(16.dp))
                 }
             }
+
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))
-            Box(Modifier.padding(4.dp)) { renderPreview(widget) }
+
+            // Превью содержимого
+            Box(Modifier.padding(4.dp)) {
+                renderPreview(widget)
+            }
         }
     }
 }
 
+/**
+ * Рекурсивный рендер превью виджета.
+ *
+ * Контейнеры (Column, Row, Box) рендерят своих children рекурсивно.
+ */
 @Composable
 private fun renderPreview(widget: WidgetItem) {
     val text = widget.properties["text"] ?: widget.type.defaultText
@@ -187,14 +204,48 @@ private fun renderPreview(widget: WidgetItem) {
         WidgetType.Card -> Card(Modifier.fillMaxWidth()) {
             Text("Карточка", Modifier.padding(16.dp))
         }
-        WidgetType.Column -> Column(Modifier.fillMaxWidth()) {
-            Text("Column", style = MaterialTheme.typography.labelSmall)
-        }
-        WidgetType.Row -> Row(Modifier.fillMaxWidth()) {
-            Text("Row", style = MaterialTheme.typography.labelSmall)
-        }
-        WidgetType.Box -> Box(Modifier.fillMaxWidth()) {
-            Text("Box", style = MaterialTheme.typography.labelSmall)
+        // Контейнеры — рекурсивный рендер
+        WidgetType.Column -> ContainerPreview("Column", widget.children)
+        WidgetType.Row -> ContainerPreview("Row", widget.children)
+        WidgetType.Box -> ContainerPreview("Box", widget.children)
+    }
+}
+
+/**
+ * Превью контейнера с рекурсивным рендером children.
+ */
+@Composable
+private fun ContainerPreview(name: String, children: List<WidgetItem>) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                RoundedCornerShape(4.dp),
+            )
+            .padding(8.dp),
+    ) {
+        Text(
+            name,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (children.isEmpty()) {
+            Text(
+                "(пусто)",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            children.forEach { child ->
+                WidgetPreview(
+                    widget = child,
+                    isSelected = false,
+                    onClick = { /* TODO: выбор дочернего виджета */ },
+                    onRemove = { /* TODO: удаление дочернего виджета */ },
+                    depth = 0, // Вложенные виджеты рендерятся внутри контейнера
+                )
+            }
         }
     }
 }
