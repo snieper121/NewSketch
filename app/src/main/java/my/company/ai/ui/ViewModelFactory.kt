@@ -1,8 +1,6 @@
 package my.company.ai.ui
 
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
-import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -12,6 +10,7 @@ import my.company.ai.ui.screens.chat.ChatViewModel
 import my.company.ai.ui.screens.compiler.BuildViewModel
 import my.company.ai.ui.screens.editor.EditorViewModel
 import my.company.ai.ui.screens.projects.ProjectsViewModel
+import my.company.ai.ui.screens.screens.ScreenManagerViewModel
 import my.company.ai.ui.screens.settings.SettingsViewModel
 
 /**
@@ -41,6 +40,12 @@ val ViewModelFactory: ViewModelProvider.Factory = viewModelFactory {
             buildPipeline = container().buildPipeline,
             toolchainManager = container().toolchainManager,
             toolchainDownloader = container().toolchainDownloader,
+        )
+    }
+    initializer {
+        ScreenManagerViewModel(
+            savedStateHandle = createSavedStateHandle(),
+            projectRepository = container().projectRepository,
         )
     }
 }
