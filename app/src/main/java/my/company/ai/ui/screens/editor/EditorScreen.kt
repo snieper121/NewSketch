@@ -95,7 +95,6 @@ fun EditorScreen(
         drawerContent = {
             ModalDrawerSheet {
                 Spacer(Modifier.height(12.dp))
-                // Переключатель Folder / Widgets
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -119,7 +118,6 @@ fun EditorScreen(
                 }
                 HorizontalDivider(Modifier.padding(horizontal = 16.dp))
                 Spacer(Modifier.height(8.dp))
-                // Навигационные кнопки
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -217,11 +215,9 @@ fun EditorScreen(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
                 Column {
-                    // Symbol bar для код-редактора
                     if (state.activeTab == EditorTab.View && state.openedFile != null) {
                         EditorSymbolBar(onInsertSymbol = viewModel::insertTextAtCursor)
                     }
-                    // Bottom tabs
                     NavigationBar {
                         EditorTabItem(
                             label = "View",
@@ -265,7 +261,6 @@ fun EditorScreen(
         }
     }
 
-    // PropertyEditorSheet
     if (state.showPropertyEditor && state.selectedWidget != null) {
         val widget = state.selectedWidget!!
         PropertyEditorSheet(
@@ -276,7 +271,6 @@ fun EditorScreen(
         )
     }
 
-    // Диалог потери изменений
     if (state.pendingOpenFile != null) {
         AlertDialog(
             onDismissRequest = viewModel::cancelPendingOpen,
