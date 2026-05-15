@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import my.company.ai.build.model.BuildContext
 import my.company.ai.build.model.BuildProgress
 import my.company.ai.build.model.PhaseResult
-import java.io.File
+import timber.log.Timber
 
 /**
  * Оркестратор фаз сборки. Запускает фазы по порядку, публикует прогресс.
@@ -33,6 +33,17 @@ class BuildPipeline(private val phases: List<BuildPhase>) {
         emitLog("Проект: ${context.packageName}")
         emitLog("Build dir: ${context.buildDir.absolutePath}")
 
+        try {
+            executePhases(context, total, startTime)
+        } catch (e: CancellationException) {
+            emitLog("Сборка отменена. Очистка...")
+            cleanup(context)
+            _result.emit(PhaseResult.Failure("Отменено пользователем"))
+            throw e
+        }
+    }
+
+    private suspend fun executePhases(context: BuildContext, total: Int, startTime: Long) {
         for ((index, phase) in phases.withIndex()) {
             currentCoroutineContext().ensureActive()
 
@@ -42,9 +53,7 @@ class BuildPipeline(private val phases: List<BuildPhase>) {
             val result = try {
                 phase.execute(context)
             } catch (e: CancellationException) {
-                emitLog("Сборка отменена.")
-                _result.emit(PhaseResult.Failure("Отменено пользователем"))
-                return
+                throw e
             } catch (e: Exception) {
                 PhaseResult.Failure("${phase.name}: ${e.message}", e)
             }
@@ -55,6 +64,7 @@ class BuildPipeline(private val phases: List<BuildPhase>) {
                 }
                 is PhaseResult.Failure -> {
                     emitLog("✗ ${phase.name} ОШИБКА: ${result.message}")
+                    cleanup(context)
                     _result.emit(result)
                     return
                 }
@@ -64,6 +74,14 @@ class BuildPipeline(private val phases: List<BuildPhase>) {
         val duration = System.currentTimeMillis() - startTime
         emitLog("=== Сборка завершена за ${duration}ms ===")
         _result.emit(PhaseResult.Success)
+    }
+
+    /**
+     * Удаляет временные файлы сборки.
+     */
+    private fun cleanup(context: BuildContext) {
+        context.buildDir.deleteRecursively()
+        Timber.d("Cleaned up build dir: ${context.buildDir.absolutePath}")
     }
 
     private suspend fun emitProgress(name: String, step: Int, total: Int, message: String) {
