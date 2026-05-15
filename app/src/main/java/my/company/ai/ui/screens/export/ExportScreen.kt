@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import my.company.ai.ui.ViewModelFactory
+import my.company.ai.ui.screens.compiler.BuildStatus
 import my.company.ai.ui.screens.compiler.BuildViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,23 +103,23 @@ fun ExportScreen(
 
                     // Статус сборки
                     when (state) {
-                        is BuildViewModel.BuildStatus.Idle -> {
+                        is BuildStatus.Idle -> {
                             Button(onClick = onBuild, modifier = Modifier.fillMaxWidth()) {
                                 Icon(Icons.Default.Build, null)
                                 Spacer(Modifier.width(8.dp))
                                 Text("Собрать APK")
                             }
                         }
-                        is BuildViewModel.BuildStatus.Running -> {
-                            val running = state as BuildViewModel.BuildStatus.Running
+                        is BuildStatus.Running -> {
+                            val running = state as BuildStatus.Running
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 CircularProgressIndicator(modifier = Modifier.height(24.dp).width(24.dp))
                                 Spacer(Modifier.width(8.dp))
                                 Text("${running.phase}... ${(running.progress * 100).toInt()}%")
                             }
                         }
-                        is BuildViewModel.BuildStatus.Success -> {
-                            val success = state as BuildViewModel.BuildStatus.Success
+                        is BuildStatus.Success -> {
+                            val success = state as BuildStatus.Success
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
                                 Spacer(Modifier.width(8.dp))
@@ -131,8 +132,8 @@ fun ExportScreen(
                                 Text("Поделиться APK")
                             }
                         }
-                        is BuildViewModel.BuildStatus.Error -> {
-                            val error = state as BuildViewModel.BuildStatus.Error
+                        is BuildStatus.Error -> {
+                            val error = state as BuildStatus.Error
                             Text(
                                 "Ошибка: ${error.message}",
                                 color = MaterialTheme.colorScheme.error,
