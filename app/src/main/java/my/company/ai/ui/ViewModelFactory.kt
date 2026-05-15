@@ -9,6 +9,7 @@ import my.company.ai.di.AppContainer
 import my.company.ai.ui.screens.chat.ChatViewModel
 import my.company.ai.ui.screens.compiler.BuildViewModel
 import my.company.ai.ui.screens.editor.EditorViewModel
+import my.company.ai.ui.screens.projectsettings.ProjectSettingsViewModel
 import my.company.ai.ui.screens.projects.ProjectsViewModel
 import my.company.ai.ui.screens.screens.ScreenManagerViewModel
 import my.company.ai.ui.screens.settings.SettingsViewModel
@@ -44,6 +45,12 @@ val ViewModelFactory: ViewModelProvider.Factory = viewModelFactory {
     }
     initializer {
         ScreenManagerViewModel(
+            savedStateHandle = createSavedStateHandle(),
+            projectRepository = container().projectRepository,
+        )
+    }
+    initializer {
+        ProjectSettingsViewModel(
             savedStateHandle = createSavedStateHandle(),
             projectRepository = container().projectRepository,
         )

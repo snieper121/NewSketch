@@ -1,38 +1,54 @@
 package my.company.ai.ui.screens.projectsettings
 
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import my.company.ai.ui.ViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProjectSettingsScreen(
     projectId: String,
     onBack: () -> Unit,
+    viewModel: ProjectSettingsViewModel = viewModel(factory = ViewModelFactory),
 ) {
-    val packageName = remember { mutableStateOf("com.example.myapp") }
-    val minSdk = remember { mutableStateOf("29") }
-    val targetSdk = remember { mutableStateOf("36") }
-    val permissions = remember { mutableStateListOf("INTERNET") }
-    val dependencies = remember {
-        mutableStateListOf(
-            "androidx.compose.material3:material3" to "2024.12.01",
-            "androidx.navigation:navigation-compose" to "2.9.0",
-        )
-    }
-
-    var showAddPerm by remember { mutableStateOf(false) }
-    var showAddDep by remember { mutableStateOf(false) }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -46,128 +62,142 @@ fun ProjectSettingsScreen(
             )
         },
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            OutlinedTextField(
-                value = packageName.value,
-                onValueChange = { packageName.value = it },
-                label = { Text("Package name") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                isError = !isValidPackage(packageName.value),
-                supportingText = {
-                    if (!isValidPackage(packageName.value)) {
-                        Text(
-                            "Неверный формат (com.example.app)",
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                },
-            )
-
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = minSdk.value,
-                    onValueChange = { minSdk.value = it.filter { c -> c.isDigit() } },
-                    label = { Text("Min SDK") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                )
-                OutlinedTextField(
-                    value = targetSdk.value,
-                    onValueChange = { targetSdk.value = it.filter { c -> c.isDigit() } },
-                    label = { Text("Target SDK") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
+        when {
+            state.isLoading -> {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
                 )
             }
-
-            HorizontalDivider()
-
-            Text("Permissions", style = MaterialTheme.typography.titleMedium)
-            permissions.forEach { perm ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
+            else -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(16.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    Text(perm, style = MaterialTheme.typography.bodyMedium)
-                    IconButton(onClick = { permissions.remove(perm) }) {
-                        Icon(Icons.Default.Delete, "Удалить", tint = MaterialTheme.colorScheme.error)
-                    }
-                }
-            }
-            OutlinedButton(onClick = { showAddPerm = true }) {
-                Icon(Icons.Default.Add, null)
-                Spacer(Modifier.width(4.dp))
-                Text("Добавить permission")
-            }
+                    // Package name
+                    OutlinedTextField(
+                        value = state.packageName,
+                        onValueChange = viewModel::updatePackageName,
+                        label = { Text("Package name") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = !isValidPackage(state.packageName),
+                        supportingText = {
+                            if (!isValidPackage(state.packageName)) {
+                                Text(
+                                    "Неверный формат (com.example.app)",
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                        },
+                    )
 
-            HorizontalDivider()
-
-            Text("Dependencies", style = MaterialTheme.typography.titleMedium)
-            dependencies.forEach { (dep, version) ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Column {
-                        Text(dep, style = MaterialTheme.typography.bodyMedium)
-                        Text(
-                            version,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    // SDK versions
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(
+                            value = state.minSdk,
+                            onValueChange = viewModel::updateMinSdk,
+                            label = { Text("Min SDK") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                        )
+                        OutlinedTextField(
+                            value = state.targetSdk,
+                            onValueChange = viewModel::updateTargetSdk,
+                            label = { Text("Target SDK") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
                         )
                     }
-                    IconButton(onClick = { dependencies.remove(dep to version) }) {
-                        Icon(Icons.Default.Delete, "Удалить", tint = MaterialTheme.colorScheme.error)
+
+                    HorizontalDivider()
+
+                    // Permissions
+                    Text("Permissions", style = MaterialTheme.typography.titleMedium)
+                    state.permissions.forEach { perm ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(perm, style = MaterialTheme.typography.bodyMedium)
+                            IconButton(onClick = { viewModel.removePermission(perm) }) {
+                                Icon(Icons.Default.Delete, "Удалить", tint = MaterialTheme.colorScheme.error)
+                            }
+                        }
                     }
+                    OutlinedButton(onClick = viewModel::showAddPermissionDialog) {
+                        Icon(Icons.Default.Add, null)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Добавить permission")
+                    }
+
+                    HorizontalDivider()
+
+                    // Dependencies
+                    Text("Dependencies", style = MaterialTheme.typography.titleMedium)
+                    state.dependencies.forEach { (dep, version) ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Column {
+                                Text(dep, style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    version,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            IconButton(onClick = { viewModel.removeDependency(dep, version) }) {
+                                Icon(Icons.Default.Delete, "Удалить", tint = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    }
+                    OutlinedButton(onClick = viewModel::showAddDependencyDialog) {
+                        Icon(Icons.Default.Add, null)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Добавить библиотеку")
+                    }
+
+                    HorizontalDivider()
+
+                    // Theme
+                    Text("Theme", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Primary: #6750A4\nDynamic colors: enabled",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
-            OutlinedButton(onClick = { showAddDep = true }) {
-                Icon(Icons.Default.Add, null)
-                Spacer(Modifier.width(4.dp))
-                Text("Добавить библиотеку")
-            }
-
-            HorizontalDivider()
-
-            Text("Theme", style = MaterialTheme.typography.titleMedium)
-            Text(
-                "Primary: #6750A4\nDynamic colors: enabled",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 
-    if (showAddPerm) {
+    // Диалог добавления permission
+    if (state.showAddPermissionDialog) {
         AddPermissionDialog(
-            onDismiss = { showAddPerm = false },
+            onDismiss = viewModel::hideAddPermissionDialog,
             onConfirm = { perm ->
-                if (perm.isNotBlank() && !permissions.contains(perm)) {
-                    permissions += perm.uppercase()
-                }
-                showAddPerm = false
+                viewModel.addPermission(perm)
+                viewModel.hideAddPermissionDialog()
             },
         )
     }
 
-    if (showAddDep) {
+    // Диалог добавления dependency
+    if (state.showAddDependencyDialog) {
         AddDependencyDialog(
-            onDismiss = { showAddDep = false },
+            onDismiss = viewModel::hideAddDependencyDialog,
             onConfirm = { dep, version ->
-                if (dep.isNotBlank()) {
-                    dependencies += dep to version
-                }
-                showAddDep = false
+                viewModel.addDependency(dep, version)
+                viewModel.hideAddDependencyDialog()
             },
         )
     }
@@ -258,5 +288,5 @@ private fun AddDependencyDialog(
 }
 
 private fun isValidPackage(pkg: String): Boolean {
-    return pkg.matches(Regex("^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+\$"))
+    return pkg.matches(Regex("^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+${'$'}"))
 }
