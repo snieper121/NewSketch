@@ -1,5 +1,6 @@
 package my.company.ai.ui.screens.projectsettings
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -195,7 +196,10 @@ private fun AddPermissionDialog(
                     singleLine = true,
                 )
                 Text("Быстрый выбор:", style = MaterialTheme.typography.labelSmall)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                ) {
                     suggestions.forEach { s ->
                         FilterChip(
                             selected = false,
